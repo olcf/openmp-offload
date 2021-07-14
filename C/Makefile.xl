@@ -3,8 +3,13 @@
 CC=xlc
 CXX=xlC
 FC=xlf
+
 CFLAGS=-O2 -qsmp=omp -qoffload 
+CXXFLAGS=-O2 -qsmp=omp -qoffload
+FFLAGS=-O2 -qsmp=omp -qoffload
+
 LIBS=-Wl,-rpath=$(OLCF_XL_ROOT)/lib  -lm
+
 TARGETS=laplace.xl
 
 all: $(TARGETS) 
@@ -16,7 +21,7 @@ all: $(TARGETS)
 	- $(CXX) $(CXXFLAGS)  $(LIBS) $< -o $@
 
 %.xl : %.f90
-	- gfortran $(FFLAGS) $(LIBS) $< -o $@
+	- $(FC) $(FFLAGS) $(LIBS) $< -o $@
 
 clean:
 	rm -rf $(TARGETS) *.o

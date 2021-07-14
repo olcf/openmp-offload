@@ -4,22 +4,25 @@
 CC=gcc
 CXX=clang++
 FC=gfortran
-CFLAGS=-O3 -fopenmp
-LIBS=-Wl,-rpath=$(OLCF_GCC_ROOT)/lib64 -foffload="-latomic -lm" -lm 
-TARGETS=laplace.gcc
 
-FLAGS = -floop-block -fopenmp -O3
+CFLAGS=-O3 -fopenmp 
+CXXFLAGS=-O3 -fopenmp
+FFLAGS=-O3 -fopenmp
+
+LIBS=-Wl,-rpath=$(OLCF_GCC_ROOT)/lib64 -foffload="-latomic -lm" -lm 
+
+TARGETS=laplace.gcc
 
 all: $(TARGETS) 
 
 %.gcc : %.c
-	- $(CC) $(FLAGS)  $(LIBS) $< -o $@
+	- $(CC) $(CFLAGS)  $(LIBS) $< -o $@
 
 %.gcc : %.cpp
-	- $(CXX) $(FLAGS)  $(LIBS) $< -o $@
+	- $(CXX) $(CXXFLAGS)  $(LIBS) $< -o $@
 
 %.gcc : %.f90
-	- $(FC) $(FLAGS) $(LIBS) $< -o $@
+	- $(FC) $(FFLAGS) $(LIBS) $< -o $@
 
 clean:
 	rm -rf $(TARGETS) *.o
