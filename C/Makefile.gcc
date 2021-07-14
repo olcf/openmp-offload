@@ -1,0 +1,25 @@
+#module use /sw/summit/modulefiles/ums/stf010/Core 
+#module load  gcc/11.1.0-latest
+
+CC=gcc
+CXX=clang++
+FC=gfortran
+CFLAGS=-O3 -fopenmp
+LIBS=-Wl,-rpath=$(OLCF_GCC_ROOT)/lib64 -foffload="-latomic -lm" -lm 
+TARGETS=laplace.gcc
+
+FLAGS = -floop-block -fopenmp -O3
+
+all: $(TARGETS) 
+
+%.gcc : %.c
+	- $(CC) $(FLAGS)  $(LIBS) $< -o $@
+
+%.gcc : %.cpp
+	- $(CXX) $(FLAGS)  $(LIBS) $< -o $@
+
+%.gcc : %.f90
+	- $(FC) $(FLAGS) $(LIBS) $< -o $@
+
+clean:
+	rm -rf $(TARGETS) *.o

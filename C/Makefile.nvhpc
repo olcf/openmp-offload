@@ -1,0 +1,22 @@
+#module load nvhpc/21.3 
+
+CC=nvc
+CXX=nvc++
+FC=nvfortran
+CFLAGS=-O3 -mp=gpu -gpu=cc70 
+LIBS=-Wl,-rpath=$(OLCF_NVHPC_ROOT)/compilers/lib -Wl,-rpath=$(OLCF_NVHPC_ROOT)/math_libs/lib64 -lm
+TARGETS=laplace.nvhpc
+
+all: $(TARGETS) 
+
+%.nvhpc : %.c
+	- $(CC) $(CFLAGS)  $(LIBS) $< -o $@
+
+%.nvhpc : %.cpp
+	- $(CXX) $(CXXFLAGS)  $(LIBS) $< -o $@
+
+%.nvhpc : %.f90
+	- gfortran $(FFLAGS) $(LIBS) $< -o $@
+
+clean:
+	rm -rf $(TARGETS) *.o

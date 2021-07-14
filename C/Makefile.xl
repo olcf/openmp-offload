@@ -1,0 +1,22 @@
+#module load xl
+
+CC=xlc
+CXX=xlC
+FC=xlf
+CFLAGS=-O2 -qsmp=omp -qoffload 
+LIBS=-Wl,-rpath=$(OLCF_XL_ROOT)/lib  -lm
+TARGETS=laplace.xl
+
+all: $(TARGETS) 
+
+%.xl : %.c
+	- $(CC) $(CFLAGS)  $(LIBS) $< -o $@
+
+%.xl : %.cpp
+	- $(CXX) $(CXXFLAGS)  $(LIBS) $< -o $@
+
+%.xl : %.f90
+	- gfortran $(FFLAGS) $(LIBS) $< -o $@
+
+clean:
+	rm -rf $(TARGETS) *.o
