@@ -1,0 +1,8 @@
+#module load xl 
+COMPILER=xl
+
+TARGETS=laplace.$(COMPILER)
+
+-include ../Makefile.$(COMPILER)
+
+

@@ -1,0 +1,8 @@
+#module use /sw/summit/modulefiles/ums/stf010/Core 
+#module load  module load llvm/13.0.0-20210727 cuda
+
+TARGETS=laplace.clang
+
+-include ../Makefile.clang
+
+

@@ -1,0 +1,10 @@
+#module use /sw/summit/modulefiles/ums/stf010/Core 
+#module load  gcc/11.1.0-latest
+
+COMPILER=gcc
+
+TARGETS=laplace.$(COMPILER)
+
+-include ../Makefile.$(COMPILER)
+
+
