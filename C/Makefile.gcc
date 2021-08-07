@@ -13,7 +13,7 @@ LIBS=-Wl,-rpath=$(OLCF_GCC_ROOT)/lib64 -foffload="-latomic -lm" -lm
 
 TARGETS=laplace.gcc
 
-all: $(TARGETS) 
+all : $(TARGETS)
 
 %.gcc : %.c
 	- $(CC) $(CFLAGS)  $(LIBS) $< -o $@

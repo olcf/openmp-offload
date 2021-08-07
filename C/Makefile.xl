@@ -10,8 +10,6 @@ FFLAGS=-O2 -qsmp=omp -qoffload
 
 LIBS=-Wl,-rpath=$(OLCF_XL_ROOT)/lib  -lm
 
-TARGETS=laplace.xl
-
 all: $(TARGETS) 
 
 %.xl : %.c

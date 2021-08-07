@@ -1,5 +1,5 @@
 #module use /sw/summit/modulefiles/ums/stf010/Core 
-#module load  module load llvm/13.0.0-latest cuda
+#module load  module load llvm/13.0.0-20210727 cuda
 
 CC=clang
 CXX=clang++
@@ -11,9 +11,7 @@ FFLAGS=-O3 -fopenmp -O3 -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -ma
 
 LIBS=-Wl,-rpath=$(OLCF_LLVM_ROOT)/lib -lm
 
-TARGETS=laplace.clang
-
-all: $(TARGETS) 
+all : $(TARGETS)
 
 %.clang : %.c
 	- $(CC) $(CFLAGS)  $(LIBS) $< -o $@
