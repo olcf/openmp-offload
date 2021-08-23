@@ -1,5 +1,4 @@
-#module use /sw/summit/modulefiles/ums/stf010/Core 
-#module load  gcc/11.1.0-latest
+#module load  gcc/11.1.0
 
 CC=gcc
 CXX=clang++
@@ -10,8 +9,6 @@ CXXFLAGS=-O3 -fopenmp
 FFLAGS=-O3 -fopenmp
 
 LIBS=-Wl,-rpath=$(OLCF_GCC_ROOT)/lib64 -foffload="-latomic -lm" -lm 
-
-TARGETS=laplace.gcc
 
 all : $(TARGETS)
 
