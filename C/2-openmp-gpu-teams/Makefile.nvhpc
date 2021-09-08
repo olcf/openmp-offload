@@ -1,4 +1,4 @@
-#module load nvhpc/21.3 
+#module load nvhpc/21.7 
 COMPILER=nvhpc
 
 TARGETS=laplace.$(COMPILER)
