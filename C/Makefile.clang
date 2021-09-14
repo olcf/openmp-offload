@@ -4,9 +4,9 @@ CC=clang
 CXX=clang++
 FC=flang
 
-CFLAGS=-O3 -fopenmp -O3 -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_70
-CXXFLAGS=-O3 -fopenmp -O3 -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_70
-FFLAGS=-O3 -fopenmp -O3 -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_70
+CFLAGS=-O3 -fopenmp -O3 -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_61
+CXXFLAGS=-O3 -fopenmp -O3 -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_61
+FFLAGS=-O3 -fopenmp -O3 -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_61
 
 LIBS=-Wl,-rpath=$(OLCF_LLVM_ROOT)/lib -lm
 
