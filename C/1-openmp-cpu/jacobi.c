@@ -15,16 +15,20 @@ unsigned int n_cells;
 #define T_results(i, j) (T_results[(i) *n_cells + (j)])
 
 // smallest permitted change in temperature
-double MAX_RESIDUAL = 20.e-5 ;
-
-// Maximum number of iterations
-unsigned int MAX_ITERATIONS = 200;
+double MAX_RESIDUAL = 1.e-5 ;
 
 // initialize grid and boundary conditions
 void init(double *T, double *T_init)
 {
 
-  srand(123456);
+  static int first_time = 1;
+  static int seed = 0;
+  if (first_time == 1){
+    seed = rand();
+    first_time = 0;
+  }
+  srand(seed);
+
   for (unsigned i = 0; i <= n_cells + 1; i++)
   {
     for (unsigned j = 0; j <= n_cells + 1; j++)
@@ -107,16 +111,22 @@ void kernel_omp_cpu(double *T, int max_iterations)
 
 void validate(double *T, double *T_results){
 
-double max_error = 0;
+  double max_error = 0;
 #pragma omp parallel for collapse(2) reduction(max: max_error)
-for (unsigned i = 1; i < n_cells; i++){
-  for (unsigned j = 1; j < n_cells; ++j){
-    max_error = fabs(T(i, j) - T_results(i, j));
+  for (unsigned i = 1; i < n_cells; i++){
+    for (unsigned j = 1; j < n_cells; ++j){
+      double error = fabs(( (T(i, j) - T_results(i, j)) / T_results(i, j)) );
+      max_error = MAX(error, max_error);
+    }
   }
-}
 
-printf("Validation maximum error = %.6lf\n", max_error);
-
+  printf("Validation maximum error = %.6lf : ", max_error);
+  if (max_error < 20 * MAX_RESIDUAL){
+    printf ("PASSED.\n");
+  }
+  else {
+    printf(" VALIDATION ERROR.\n");
+  }
 }
 
 int main(int argc, char *argv[])
