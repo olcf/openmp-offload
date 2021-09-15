@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
+#include <time.h>
 
 unsigned int n_cells;
 
@@ -23,7 +23,7 @@ void init(double *T, double *T_init) {
   static int first_time = 1;
   static int seed = 0;
   if (first_time == 1) {
-    seed = rand();
+    seed = time(0);
     first_time = 0;
   }
   srand(seed);
@@ -70,7 +70,7 @@ void kernel_serial(double *T, int max_iterations) {
   free(T_new);
 }
 
-void kernel_gpu_teams(double *T, int max_iterations) {
+void kernel_gpu_teams_parallel(double *T, int max_iterations) {
 
   int iteration = 0;
   double residual = 1.e5;
@@ -82,7 +82,7 @@ void kernel_gpu_teams(double *T, int max_iterations) {
   while (residual > MAX_RESIDUAL && iteration <= max_iterations) {
 
     // main computational kernel, average over neighbours in the grid
-#pragma omp target teams distribute parallel for simd collapse(2)\
+#pragma omp target teams distribute parallel for simd collapse(2) \
   map(T[:(n_cells + 2) * (n_cells + 2)], T_new[:(n_cells + 2) * (n_cells + 2)])
     for (unsigned i = 1; i <= n_cells; i++)
       for (unsigned j = 1; j <= n_cells; j++)
@@ -93,7 +93,7 @@ void kernel_gpu_teams(double *T, int max_iterations) {
     residual = 0.0;
 
     // compute the largest change and copy T_new to T
-#pragma omp target teams distribute parallel for simd collapse(2) reduction(max : residual)\
+#pragma omp target teams distribute parallel for simd collapse(2) reduction(max : residual) \
   map(T[:(n_cells + 2) * (n_cells + 2)], T_new[:(n_cells + 2) * (n_cells + 2)])
     for (unsigned int i = 1; i <= n_cells; i++) {
       for (unsigned int j = 1; j <= n_cells; j++) {
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
   init(T, T_init);
 
   start = omp_get_wtime();
-  kernel_gpu_teams(T, max_iterations);
+  kernel_gpu_teams_parallel(T, max_iterations);
   end = omp_get_wtime();
 
   validate(T, T_results);

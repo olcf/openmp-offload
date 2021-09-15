@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
+#include <time.h>
 
 unsigned int n_cells;
 
@@ -23,7 +23,7 @@ void init(double *T, double *T_init) {
   static int first_time = 1;
   static int seed = 0;
   if (first_time == 1) {
-    seed = rand();
+    seed = time(0);
     first_time = 0;
   }
   srand(seed);
@@ -111,10 +111,9 @@ void kernel_gpu_teams_parallel_data(double *T, int max_iterations) {
 
   free(T_new);
 #pragma omp target update from(T[:(n_cells + 2) * (n_cells + 2)])
-#pragma omp target exit data map(delete                                        \
-                                 : T[:(n_cells + 2) * (n_cells + 2)])          \
-    map(delete                                                                 \
-        : T_new[(n_cells + 2) * (n_cells + 2)])
+#pragma omp target exit data \
+  map(delete: T[:(n_cells + 2) * (n_cells + 2)])  \
+  map(delete: T_new[(n_cells + 2) * (n_cells + 2)])
 }
 
 void validate(double *T, double *T_results) {
