@@ -12,14 +12,13 @@ const unsigned int SIZE = (n_cells + 2) * (n_cells +2);
 
 #define T(i, j) (T[(i)*n_cells + (j)])
 #define T_new(i, j) (T_new[(i)*n_cells + (j)])
-#define T_init(i, j) (T_init[(i)*n_cells + (j)])
 #define T_results(i, j) (T_results[(i)*n_cells + (j)])
 
 // smallest permitted change in temperature
 double MAX_RESIDUAL = 1.e-5;
 
 // initialize grid and boundary conditions
-void init(double (&T)[SIZE], double (&T_init)[SIZE]) {
+void init(double (&T)[SIZE]) {
 
   static int first_time = 1;
   static int seed = 0;
@@ -32,7 +31,6 @@ void init(double (&T)[SIZE], double (&T_init)[SIZE]) {
   for (unsigned i = 0; i <= n_cells + 1; i++) {
     for (unsigned j = 0; j <= n_cells + 1; j++) {
       T(i, j) = (double)rand() / (double)RAND_MAX;
-      T_init(i, j) = T(i, j);
     }
   }
 }
@@ -131,7 +129,6 @@ int main(int argc, char *argv[]) {
   int max_iterations; // maximal number of iterations
 
   double T[SIZE];    // temperature grid
-  double T_init[SIZE];    // Initial temperature
   double T_results[SIZE]; // CPU results for validation
 
   if (argc < 2) {
@@ -142,7 +139,7 @@ int main(int argc, char *argv[]) {
   }
   printf("Using statically sized number of cells = %u\n", n_cells);
 
-  init(T_results, T_init);
+  init(T_results);
 
   double start = omp_get_wtime();
   kernel_serial(T_results, max_iterations);
@@ -150,7 +147,7 @@ int main(int argc, char *argv[]) {
 
   double serial_cpu_time = end - start;
 
-  init(T, T_init);
+  init(T);
 
   start = omp_get_wtime();
   kernel_gpu_teams_parallel_data_implicit(T, max_iterations);

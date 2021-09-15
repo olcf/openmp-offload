@@ -12,14 +12,13 @@ unsigned int SIZE;
 
 #define T(i, j) (T[(i)*n_cells + (j)])
 #define T_new(i, j) (T_new[(i)*n_cells + (j)])
-#define T_init(i, j) (T_init[(i)*n_cells + (j)])
 #define T_results(i, j) (T_results[(i)*n_cells + (j)])
 
 // smallest permitted change in temperature
 double MAX_RESIDUAL = 1.e-5;
 
 // initialize grid and boundary conditions
-void init(double *T, double *T_init) {
+void init(double *T) {
 
   static int first_time = 1;
   static int seed = 0;
@@ -32,7 +31,6 @@ void init(double *T, double *T_init) {
   for (unsigned i = 0; i <= n_cells + 1; i++) {
     for (unsigned j = 0; j <= n_cells + 1; j++) {
       T(i, j) = (double)rand() / (double)RAND_MAX;
-      T_init(i, j) = T(i, j);
     }
   }
 }
@@ -84,7 +82,7 @@ void kernel_gpu_teams_parallel(double *T, int max_iterations) {
 
     // main computational kernel, average over neighbours in the grid
 #pragma omp target teams distribute parallel for simd collapse(2) \
-  map(T[:SIZE], T_new[:SIZE])
+          map(T[:SIZE], T_new[:SIZE])
     for (unsigned i = 1; i <= n_cells; i++)
       for (unsigned j = 1; j <= n_cells; j++)
         T_new(i, j) =
@@ -95,7 +93,7 @@ void kernel_gpu_teams_parallel(double *T, int max_iterations) {
 
     // compute the largest change and copy T_new to T
 #pragma omp target teams distribute parallel for simd collapse(2) reduction(max : residual) \
-  map(T[:SIZE], T_new[:SIZE])
+          map(T[:SIZE], T_new[:SIZE])
     for (unsigned int i = 1; i <= n_cells; i++) {
       for (unsigned int j = 1; j <= n_cells; j++) {
         residual = MAX(fabs(T_new(i, j) - T(i, j)), residual);
@@ -132,7 +130,6 @@ int main(int argc, char *argv[]) {
   int max_iterations; // maximal number of iterations
 
   double *T;         // temperature grid
-  double *T_init;    // Initial temperature
   double *T_results; // CPU results for validation
 
   if (argc < 3) {
@@ -146,15 +143,14 @@ int main(int argc, char *argv[]) {
   SIZE = (n_cells + 2) * (n_cells + 2);
 
   T = (double *)malloc(SIZE * sizeof(double));
-  T_init = (double *)malloc(SIZE * sizeof(double));
   T_results = (double *)malloc(SIZE * sizeof(double));
 
-  if (T == NULL || T_init == NULL || T_results == NULL) {
+  if (T == NULL || T_results == NULL) {
     printf("Error allocating storage for Temperature\n");
     exit(1);
   }
 
-  init(T_results, T_init);
+  init(T_results);
 
   double start = omp_get_wtime();
   kernel_serial(T_results, max_iterations);
@@ -162,7 +158,7 @@ int main(int argc, char *argv[]) {
 
   double serial_cpu_time = end - start;
 
-  init(T, T_init);
+  init(T);
 
   start = omp_get_wtime();
   kernel_gpu_teams_parallel(T, max_iterations);
