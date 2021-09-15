@@ -5,119 +5,180 @@
 #include <sys/time.h>
 #include <string.h>
 
-// grid size
-#define GRIDY 4096
-#define GRIDX 4096
+unsigned int n_cells;
 
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 
+#define T(i, j)  (T[(i) * n_cells + (j)])
+#define T_new(i, j) (T_new[(i) * n_cells + (j)])
+#define T_init(i, j) (T_init[(i) *n_cells + (j)])
+#define T_results(i, j) (T_results[(i) *n_cells + (j)])
+
 // smallest permitted change in temperature
-#define MAX_TEMP_ERROR 0.02
+double MAX_RESIDUAL = 1.e-5 ;
 
 // initialize grid and boundary conditions
-void init(double T[][GRIDY + 2], double T_new[][GRIDY + 2]) {
+void init(double *T, double *T_init)
+{
 
-  int i, j;
+  static int first_time = 1;
+  static int seed = 0;
+  if (first_time == 1){
+    seed = rand();
+    first_time = 0;
+  }
+  srand(seed);
 
-  for (i = 0; i <= GRIDX + 1; i++) {
-    for (j = 0; j <= GRIDY + 1; j++) {
-      T[i][j] = T_new[i][j] = 0.0;
+  for (unsigned i = 0; i <= n_cells + 1; i++)
+  {
+    for (unsigned j = 0; j <= n_cells + 1; j++)
+    {
+      T(i, j) = (double) rand()/ (double) RAND_MAX;
+      T_init(i,j) = T(i, j);
     }
-  }
-
-  // these boundary conditions never change throughout run
-
-  // set left side to 0 and right to a linear increase
-  for (i = 0; i <= GRIDX + 1; i++) {
-    T[i][0] = 0.0;
-    T[i][GRIDY + 1] = (128.0 / GRIDX) * i;
-  }
-
-  // set top to 0 and bottom to linear increase
-  for (j = 0; j <= GRIDY + 1; j++) {
-    T[0][j] = 0.0;
-    T[GRIDX + 1][j] = (128.0 / GRIDY) * j;
   }
 }
 
+void kernel_serial(double *T, int max_iterations)
+{
 
-void kernel_gpu_teams_parallel_omp(double T[][GRIDY + 2], double T_new[][GRIDY + 2],
-                    int max_iterations, double dt) {
   int iteration = 0;
+  double residual = 1.e5 ;
+  double *T_new ;
+
+  T_new = (double*) malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
 
   // simulation iterations
-  while (dt > MAX_TEMP_ERROR && iteration <= max_iterations) {
+  while (residual > MAX_RESIDUAL && iteration <= max_iterations) {
 
-// main computational kernel, average over neighbours in the grid
-#pragma omp target map(T[:GRIDX + 2][:GRIDY + 2], T_new[:GRIDX + 2][:GRIDY + 2])
-#pragma omp teams distribute  parallel for simd collapse(2)
-    for (int i = 1; i <= GRIDX; i++)
-      for (int j = 1; j <= GRIDY; j++)
-        T_new[i][j] =
-            0.25 * (T[i + 1][j] + T[i - 1][j] + T[i][j + 1] + T[i][j - 1]);
+    // main computational kernel, average over neighbours in the grid
+    for (unsigned i = 1; i <= n_cells; i++)
+      for (unsigned j = 1; j <= n_cells; j++)
+        T_new(i, j) =
+            0.25 * (T(i+1, j) + T(i-1, j) + T(i, j+1) + T(i, j-1));
 
     // reset dt
-    dt = 0.0;
+    residual = 0.0;
 
-// compute the largest change and copy T_new to T
-#pragma omp target map(dt)                                                     \
-    map(T[:GRIDX + 2][:GRIDY + 2], T_new[:GRIDX + 2][:GRIDY + 2])
-#pragma omp teams distribute parallel for simd collapse(2) reduction(max : dt)
-    for (int i = 1; i <= GRIDX; i++) {
-      for (int j = 1; j <= GRIDY; j++) {
-        dt = MAX(fabs(T_new[i][j] - T[i][j]), dt);
-        T[i][j] = T_new[i][j];
+    // compute the largest change and copy T_new to T
+    for (unsigned int i = 1; i <= n_cells; i++) {
+      for (unsigned int j = 1; j <= n_cells; j++) {
+        residual = MAX(fabs(T_new(i, j) - T(i, j)), residual);
+        T(i, j) = T_new(i, j);
       }
     }
-
-    // periodically print largest change
-    if ((iteration % 100) == 0)
-      printf("Iteration %4d, dt %.6f\n", iteration, dt);
-
     iteration++;
   }
+
+  free(T_new);
 }
 
+void kernel_gpu_teams_parallel(double *T, int max_iterations)
+{
+
+  int iteration = 0;
+  double residual = 1.e5 ;
+  double *T_new ;
+
+  T_new = (double*) malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
+
+  // simulation iterations
+  while (residual > MAX_RESIDUAL && iteration <= max_iterations) {
+
+    // main computational kernel, average over neighbours in the grid
+#pragma omp target map(T[:(n_cells+2)*(n_cells + 2)], T_new[:(n_cells + 2)*(n_cells + 2)])
+#pragma omp teams distribute parallel for simd collapse(2)
+   for (unsigned i = 1; i <= n_cells; i++)
+      for (unsigned j = 1; j <= n_cells; j++)
+        T_new(i, j) =
+            0.25 * (T(i+1, j) + T(i-1, j) + T(i, j+1) + T(i, j-1));
+
+    // Reset residual
+    residual = 0.0;
+
+    // compute the largest change and copy T_new to T
+#pragma omp target map(residual) map(T[:(n_cells + 2)*(n_cells + 2)], T_new[:(n_cells + 2)*(n_cells + 2)])
+#pragma omp teams distribute parallel for simd collapse(2) reduction(max : residual)
+   for (unsigned int i = 1; i <= n_cells; i++) {
+      for (unsigned int j = 1; j <= n_cells; j++) {
+        residual = MAX(fabs(T_new(i, j) - T(i, j)), residual);
+        T(i, j) = T_new(i, j);
+      }
+    }
+    iteration++;
+  }
+
+  free(T_new);
+}
+
+void validate(double *T, double *T_results){
+
+  double max_error = 0;
+#pragma omp parallel for collapse(2) reduction(max: max_error)
+  for (unsigned i = 1; i < n_cells; i++){
+    for (unsigned j = 1; j < n_cells; ++j){
+      double error = fabs(( (T(i, j) - T_results(i, j)) / T_results(i, j)) );
+      max_error = MAX(error, max_error);
+    }
+  }
+
+  printf("Validation maximum error = %.6lf : ", max_error);
+  if (max_error < 20 * MAX_RESIDUAL){
+    printf ("PASSED.\n");
+  }
+  else {
+    printf(" VALIDATION ERROR.\n");
+  }
+}
 
 int main(int argc, char *argv[])
 {
-
   int max_iterations; // maximal number of iterations
-  double dt = 100;    // largest change in temperature
-                      //  struct timeval start_time, stop_time, elapsed_time; // timers
+                      
+  double *T;          // temperature grid 
+  double *T_init;     // Initial temperature
+  double *T_results;  // CPU results for validation
 
-  //  double T1_new[GRIDX + 2][GRIDY + 2]; // temperature grid
-  //  double T1[GRIDX + 2][GRIDY + 2];     // temperature grid from last iteration
-
-  double(*T_new)[GRIDY + 2]; // temperature grid
-  double(*T)[GRIDY + 2];     // temperature grid from last iteration
-
-  if (argc != 2)
-  {
-    printf("Usage: %s number_of_iterations\n", argv[0]);
+  if (argc < 3) {
+    printf("Usage: %s number_of_iterations number_of_cells\n", argv[0]);
     exit(1);
   }
   else
   {
     max_iterations = atoi(argv[1]);
+    n_cells = atoi(argv[2]);
   }
 
-  printf("Running GPU Teams Parallel OpenMP kernel\n\n");
+  T = (double*) malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
+  T_init = (double*) malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
+  T_results = (double*) malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
 
-  T = (double(*)[GRIDY + 2]) malloc((GRIDX + 2) * (GRIDY + 2) * sizeof(double));
-  T_new = (double(*)[GRIDY + 2]) malloc((GRIDX + 2) * (GRIDY + 2) * sizeof(double));
-
-  if (T == NULL || T_new == NULL)
+  if (T == NULL || T_init == NULL || T_results == NULL)
   {
     printf("Error allocating storage for Temperature\n");
     exit(1);
   }
 
-  init(T, T_new);
-  double start = omp_get_wtime();
-  kernel_gpu_teams_parallel_omp(T, T_new, max_iterations, dt);
-  double end = omp_get_wtime();
-  printf("GPU Teams Parallel OpenMP kernel time = %.6f Seconds\n\n", end - start);
+  init(T_results, T_init);
 
-  return 0;
+  double start = omp_get_wtime();
+  kernel_serial(T_results, max_iterations); 
+  double end = omp_get_wtime();
+
+  double serial_cpu_time = end - start;
+
+  init(T, T_init);
+
+  start = omp_get_wtime();
+  kernel_gpu_teams_parallel(T, max_iterations); 
+  end = omp_get_wtime();
+
+  validate(T, T_results);
+
+  double omp_teams_parallel_time = end - start;
+
+  printf("CPU serial kernel time = %.6lf Sec\n", serial_cpu_time);
+  printf("OpenMP GPU Teams Distribute Parallel time = %.6lf Sec\n", omp_teams_parallel_time);
+  printf("Number of OpenMP threads = %d\n", omp_get_max_threads());
+  printf("Speedup = %.6lf\n", serial_cpu_time / omp_teams_parallel_time);
 }
