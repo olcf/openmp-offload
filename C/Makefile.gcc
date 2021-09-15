@@ -1,7 +1,7 @@
 #module load  gcc/11.1.0
 
 CC=gcc
-CXX=clang++
+CXX=g++
 FC=gfortran
 
 CFLAGS=-O3 -fopenmp 
