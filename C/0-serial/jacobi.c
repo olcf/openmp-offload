@@ -6,6 +6,7 @@
 #include <time.h>
 
 unsigned int n_cells;
+unsigned int SIZE;
 
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 
@@ -14,10 +15,7 @@ unsigned int n_cells;
 #define T_init(i, j) (T_init[(i)*n_cells + (j)])
 
 // smallest permitted change in temperature
-double MAX_RESIDUAL = 20.e-5;
-
-// Maximum number of iterations
-unsigned int MAX_ITERATIONS = 200;
+double MAX_RESIDUAL = 1.e-5;
 
 // initialize grid and boundary conditions
 void init(double *T, double *T_init) {
@@ -44,7 +42,7 @@ void kernel_serial(double *T, int max_iterations) {
   double residual = 1.e5;
   double *T_new;
 
-  T_new = (double *)malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
+  T_new = (double *)malloc(SIZE * sizeof(double));
 
   // simulation iterations
   while (residual > MAX_RESIDUAL && iteration <= max_iterations) {
@@ -65,7 +63,6 @@ void kernel_serial(double *T, int max_iterations) {
         T(i, j) = T_new(i, j);
       }
     }
-
     iteration++;
   }
   printf("Serial Residual = %.9lf\n", residual);
@@ -87,10 +84,11 @@ int main(int argc, char *argv[]) {
     n_cells = atoi(argv[2]);
   }
 
-  printf("Running CPU serial kernel\n\n");
+  SIZE = (n_cells + 2) * (n_cells + 2);
 
-  T = (double *)malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
-  T_init = (double *)malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
+  T = (double *)malloc(SIZE * sizeof(double));
+  T_init = (double *)malloc(SIZE * sizeof(double));
+
 
   if (T == NULL || T_init == NULL) {
     printf("Error allocating storage for Temperature\n");

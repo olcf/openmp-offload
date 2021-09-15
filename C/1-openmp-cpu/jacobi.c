@@ -6,6 +6,7 @@
 #include <time.h>
 
 unsigned int n_cells;
+unsigned int SIZE;
 
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 
@@ -42,7 +43,7 @@ void kernel_serial(double *T, int max_iterations) {
   double residual = 1.e5;
   double *T_new;
 
-  T_new = (double *)malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
+  T_new = (double *)malloc(SIZE * sizeof(double));
 
   // simulation iterations
   while (residual > MAX_RESIDUAL && iteration <= max_iterations) {
@@ -140,9 +141,11 @@ int main(int argc, char *argv[]) {
     n_cells = atoi(argv[2]);
   }
 
-  T = (double *)malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
-  T_init = (double *)malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
-  T_results = (double *)malloc((n_cells + 2) * (n_cells + 2) * sizeof(double));
+  SIZE = (n_cells + 2) * (n_cells + 2);
+
+  T = (double *)malloc(SIZE * sizeof(double));
+  T_init = (double *)malloc(SIZE * sizeof(double));
+  T_results = (double *)malloc(SIZE * sizeof(double));
 
   if (T == NULL || T_init == NULL || T_results == NULL) {
     printf("Error allocating storage for Temperature\n");
