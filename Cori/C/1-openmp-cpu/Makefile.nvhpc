@@ -1,0 +1,8 @@
+#module load nvhpc/21.7 
+COMPILER=nvhpc
+
+TARGETS=laplace.$(COMPILER)
+
+-include ../Makefile.$(COMPILER)
+
+
