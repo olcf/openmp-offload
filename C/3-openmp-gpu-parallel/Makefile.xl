@@ -1,7 +1,7 @@
 #module load xl 
 COMPILER=xl
 
-TARGETS=laplace.$(COMPILER)
+TARGETS=jacobi.$(COMPILER)
 
 -include ../Makefile.$(COMPILER)
 

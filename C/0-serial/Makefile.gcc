@@ -2,7 +2,7 @@
 
 COMPILER=gcc
 
-TARGETS=laplace.$(COMPILER)
+TARGETS=jacobi.$(COMPILER)
 
 -include ../Makefile.$(COMPILER)
 
