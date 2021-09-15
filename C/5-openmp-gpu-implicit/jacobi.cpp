@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
   } else {
     max_iterations = atoi(argv[1]);
   }
-  printf("Using statically sized number os cells = %u\n", n_cells);
+  printf("Using statically sized number of cells = %u\n", n_cells);
 
   init(T_results, T_init);
 
