@@ -83,8 +83,6 @@ contains
     nIterations = 0
     Residual       = huge ( 1.0_real64 )
     
-    TimeStart = omp_get_wtime ( )
-    
     do while ( nIterations <= MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
                
@@ -104,13 +102,7 @@ contains
     end do
     
     nIterations = nIterations - 1
-    TimeTotal = omp_get_wtime ( ) - TimeStart
     
-    print*, '======== Serial =========='
-    print*, 'Residual    :', Residual
-    print*, 'nIterations :', nIterations
-    print*, 'Time (s)    :', TimeTotal
-        
   end subroutine Compute
  
  
@@ -125,9 +117,6 @@ contains
     integer, intent ( out ) :: &
       nIterations
     
-    real ( real64 ) :: &
-      TimeStart, &
-      TimeTotal
     real ( real64 ), dimension ( :, : ), allocatable :: &
       T_New
     
@@ -138,8 +127,6 @@ contains
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
-    
-    TimeStart = omp_get_wtime ( )
     
     do while ( nIterations <= MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
@@ -170,13 +157,6 @@ contains
     end do
     
     nIterations = nIterations - 1
-    TimeTotal = omp_get_wtime ( ) - TimeStart
-    
-    print*, '======== CPU_OpenMP =========='
-    print*, 'nThreads    :', omp_get_max_threads()
-    print*, 'Residual    :', Residual
-    print*, 'nIterations :', nIterations
-    print*, 'Time (s)    :', TimeTotal
         
   end subroutine Compute_CPU_OpenMP
   
@@ -192,9 +172,6 @@ contains
     integer, intent ( out ) :: &
       nIterations
     
-    real ( real64 ) :: &
-      TimeStart, &
-      TimeTotal
     real ( real64 ), dimension ( :, : ), allocatable :: &
       T_New
     
@@ -205,8 +182,6 @@ contains
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
-    
-    TimeStart = omp_get_wtime ( )
     
     do while ( nIterations <= MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
@@ -237,12 +212,6 @@ contains
     end do
     
     nIterations = nIterations - 1
-    TimeTotal = omp_get_wtime ( ) - TimeStart
-    
-    print*, '======== GPU_OpenMP_1 =========='
-    print*, 'Residual    :', Residual
-    print*, 'nIterations :', nIterations
-    print*, 'Time (s)    :', TimeTotal
         
   end subroutine Compute_GPU_OpenMP_1
   
@@ -258,9 +227,6 @@ contains
     integer, intent ( out ) :: &
       nIterations
     
-    real ( real64 ) :: &
-      TimeStart, &
-      TimeTotal
     real ( real64 ), dimension ( :, : ), allocatable :: &
       T_New
     
@@ -271,8 +237,6 @@ contains
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
-    
-    TimeStart = omp_get_wtime ( )
     
     do while ( nIterations <= MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
@@ -304,12 +268,6 @@ contains
     end do
     
     nIterations = nIterations - 1
-    TimeTotal = omp_get_wtime ( ) - TimeStart
-    
-    print*, '======== GPU_OpenMP_1 =========='
-    print*, 'Residual    :', Residual
-    print*, 'nIterations :', nIterations
-    print*, 'Time (s)    :', TimeTotal
         
   end subroutine Compute_GPU_OpenMP_2
   
@@ -325,9 +283,6 @@ contains
     integer, intent ( out ) :: &
       nIterations
     
-    real ( real64 ) :: &
-      TimeStart, &
-      TimeTotal
     real ( real64 ), dimension ( :, : ), allocatable :: &
       T_New
     
@@ -338,8 +293,6 @@ contains
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
-    
-    TimeStart = omp_get_wtime ( )
     
     do while ( nIterations <= MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
@@ -372,12 +325,6 @@ contains
     end do
     
     nIterations = nIterations - 1
-    TimeTotal = omp_get_wtime ( ) - TimeStart
-    
-    print*, '======== GPU_OpenMP_3 =========='
-    print*, 'Residual    :', Residual
-    print*, 'nIterations :', nIterations
-    print*, 'Time (s)    :', TimeTotal
         
   end subroutine Compute_GPU_OpenMP_3
   
@@ -393,9 +340,6 @@ contains
     integer, intent ( out ) :: &
       nIterations
     
-    real ( real64 ) :: &
-      TimeStart, &
-      TimeTotal
     real ( real64 ), dimension ( :, : ), allocatable :: &
       T_New
     
@@ -406,8 +350,6 @@ contains
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
-    
-    TimeStart = omp_get_wtime ( )
     
     !$OMP target enter data map ( to : T )
     !$OMP target enter data map ( alloc : T_New )
@@ -444,22 +386,66 @@ contains
     !$OMP target exit data map ( from : T )
     
     nIterations = nIterations - 1
-    TimeTotal = omp_get_wtime ( ) - TimeStart
-    
-    print*, '======== GPU_OpenMP_4 =========='
-    print*, 'Residual    :', Residual
-    print*, 'nIterations :', nIterations
-    print*, 'Time (s)    :', TimeTotal
         
   end subroutine Compute_GPU_OpenMP_4
   
   
-  subroutine Validate ( T1, T2 ) 
+  subroutine ShowResults &
+               ( Description, Validation, Timing, Speedups, Residual, &
+                 ValidationError, nIterations, CPU_nThreadsOptions )
+    character ( * ), intent ( in ) :: &
+      Description
+    logical, intent ( in ) :: &
+      Validation
+    real ( real64 ), intent ( in ) :: &
+      Timing, &
+      Speedups, &
+      Residual, &
+      ValidationError
+    integer, intent ( in ) :: &
+      nIterations
+    logical, intent ( in ), optional :: &
+      CPU_nThreadsOptions
+    
+    character ( 6 ) :: &
+      ValidationString
+    logical :: &
+      CPU_nThreads
+      
+    CPU_nThreads = .false.
+    if ( present ( CPU_nThreadsOptions ) ) &
+      CPU_nThreads = CPU_nThreadsOptions
+    
+    if ( Validation ) then
+      ValidationString = 'PASSED'
+    else
+      ValidationString = 'FAILED'
+    end if
+    
+    print '( a9, a, a9 )', &
+          '======== ', trim ( Description ), ' ========='
+    if ( CPU_nThreads ) &
+      print '( a15, i3       )', 'nThreads      : ', omp_get_max_threads ( )
+    print '( a15, es10.3e2 )', 'Timing (s)    : ', Timing
+    print '( a15, es10.3e2 )', 'Speedups      : ', Speedups
+    print '( a15, es10.3e2 )', 'Residual      : ', Residual
+    print '( a15, i7       )', 'nIterations   : ', nIterations
+    print '( a15, a8       )', 'Validation    : ', ValidationString
+    if ( .not. Validation ) &
+      print '( a15, es10.3e2 )', '  Error       : ', ValidationError
+    print '( a )', ''
+  
+  end subroutine ShowResults
+  
+  
+  subroutine Validate ( T1, T2, Validation, Error ) 
   
     real ( real64 ), dimension ( 0 :, 0 : ), intent ( in ) :: &
       T1, T2
-    logical :: &
-      V
+    logical, intent ( out ) :: &
+      Validation
+    real ( real64 ), intent ( out ) :: &
+      Error
 
     !-- Only compare the proper ( inner ) cells. 
     !   The following associate construct creates 'aliases' 
@@ -470,18 +456,13 @@ contains
       T2_P => T1 ( 1 : size ( T2, dim = 1 ) - 2, &
                    1 : size ( T2, dim = 2 ) - 2 ) )
                     
-    associate ( Error => abs ( ( T1_P - T2_P ) / ( T1_P ) ) )
+    Error = maxval ( abs ( ( T1_P - T2_P ) / ( T1_P ) ) )
     
-    if ( all ( Error  <= 20 * MAX_RESIDUAL ) ) then
-      print*, 'Validation  : ', 'PASSED' 
+    if ( Error <= 20 * MAX_RESIDUAL ) then
+      Validation = .true.
     else
-      print*, 'Validation  : ', 'FAILED' 
-      print*, '     Error  : ', maxval ( Error )
+      Validation = .false.
     end if
-    
-    print*, ''
-    
-    end associate  !-- Error
     
     end associate  !-- T1_P, T2_P
   
@@ -503,39 +484,109 @@ program Jacobi
   integer, dimension ( 2 ) :: &
     nCells
   real ( real64 ) :: &
-    Residual
+    TimeStart, &
+    TimeTotal, &
+    TimeSerial, &
+    Residual, &
+    ValidationError
   real ( real64 ), dimension ( :, : ), allocatable :: &
     T, &          !-- 
     T_Init, &     !-- A copy of initial condition
     T_Results     !-- A copy of results from serial calculation
+  logical :: &
+    Validation
     
   nCells = -1
   
   call Initialize ( T, T_Init, nCells )
   if ( nCells ( 1 ) == -1 ) return
   
+  TimeStart = omp_get_wtime ( )
   call Compute ( T, nCells, Residual, nIterations )
+  TimeSerial = omp_get_wtime ( ) - TimeStart
+  
+  call ShowResults ( 'Serial', Validation = .true., &
+                     Timing = TimeSerial, &
+                     Speedups = 1.0_real64, &
+                     Residual = Residual, &
+                     ValidationError = 0.0_real64, &
+                     nIterations = nIterations )
+  
+  !-- Save Results for other subroutine validation
   T_Results = T
-  print*, ''
   
+  
+  !-- CPU OpenMP
   T = T_Init
+  
+  TimeStart = omp_get_wtime ( )
   call Compute_CPU_OpenMP ( T, nCells, Residual, nIterations )
-  call Validate ( T, T_Results )
+  TimeTotal = omp_get_wtime ( ) - TimeStart
   
+  call Validate ( T, T_Results, Validation, ValidationError )
+  
+  call ShowResults &
+         ( 'CPU OpenMP', Validation, TimeTotal, TimeSerial / TimeTotal, &
+           Residual, ValidationError, nIterations, &
+           CPU_nThreadsOptions = .true. )              
+  
+  
+  !-- GPU_OpenMP_1 
+
   T = T_Init
+  
+  TimeStart = omp_get_wtime ( )   
   call Compute_GPU_OpenMP_1 ( T, nCells, Residual, nIterations )
-  call Validate ( T, T_Results )
+  TimeTotal = omp_get_wtime ( ) - TimeStart
   
+  call Validate ( T, T_Results, Validation, ValidationError )   
+  call ShowResults &
+         ( 'GPU_OpenMP_1', Validation, TimeTotal, TimeSerial / TimeTotal, &
+           Residual, ValidationError, nIterations )   
+  
+  !-- GPU_OpenMP_2
+
   T = T_Init
+  
+  TimeStart = omp_get_wtime ( )
   call Compute_GPU_OpenMP_2 ( T, nCells, Residual, nIterations )
-  call Validate ( T, T_Results )
+  TimeTotal = omp_get_wtime ( ) - TimeStart
+  
+  call Validate ( T, T_Results, Validation, ValidationError )
+  
+  call ShowResults &
+         ( 'GPU_OpenMP_2', Validation, TimeTotal, TimeSerial / TimeTotal, &
+           Residual, ValidationError, nIterations )
+  
+  
+  !-- GPU_OpenMP_3
   
   T = T_Init
+  
+  TimeStart = omp_get_wtime ( )
   call Compute_GPU_OpenMP_3 ( T, nCells, Residual, nIterations )
-  call Validate ( T, T_Results )
+  TimeTotal = omp_get_wtime ( ) - TimeStart
+  
+  call Validate ( T, T_Results, Validation, ValidationError )
+  
+  call ShowResults &
+         ( 'GPU_OpenMP_3', Validation, TimeTotal, TimeSerial / TimeTotal, &
+           Residual, ValidationError, nIterations )
+  
+  
+  !-- GPU_OpenMP_4
   
   T = T_Init
+  
+  TimeStart = omp_get_wtime ( )
   call Compute_GPU_OpenMP_4 ( T, nCells, Residual, nIterations )
-  call Validate ( T, T_Results )
+  TimeTotal = omp_get_wtime ( ) - TimeStart
+  
+  call Validate ( T, T_Results, Validation, ValidationError )
+  
+  call ShowResults &
+         ( 'GPU_OpenMP_4', Validation, TimeTotal, TimeSerial / TimeTotal, &
+           Residual, ValidationError, nIterations )
+    
   
 end program Jacobi
