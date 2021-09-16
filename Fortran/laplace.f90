@@ -6,21 +6,48 @@ module Laplacian_Form
   implicit none
   public
   
-  integer, parameter :: &
-    MAX_ITERATIONS = 100
-    !MAX_ITERATIONS = 102400
+  integer :: &
+    MAX_ITERATIONS = 10000
   real ( real64 ), parameter :: &
     MAX_RESIDUAL = 1e-5_real64
 
 contains 
 
-  subroutine Initialize ( nCells, T, T_Init )
+  subroutine Initialize ( T, T_Init, nCells )
     
-    integer, dimension ( : ), intent ( in ) :: &
-      nCells
     real ( real64 ), dimension ( :, : ), allocatable, intent ( out ) :: &
       T, &
       T_Init
+    integer, dimension ( : ), intent ( out ) :: &
+      nCells
+      
+    character ( 31 ) :: &
+      ExecName, &
+      nCellsString, &
+      MaxIterationsString
+      
+    !-- Parse command line options
+    call get_command_argument ( 0, Value = ExecName )
+    
+    if ( command_argument_count ( ) == 2 ) then
+      call get_command_argument ( 1, nCellsString )
+      read ( nCellsString, fmt = '( i7 )' ) nCells ( 1 )
+      nCells ( 2 ) = nCells ( 1 )
+
+      call get_command_argument ( 2, MaxIterationsString )
+      read ( MaxIterationsString, fmt = '( i7 )' ) MAX_ITERATIONS
+      
+      print*, 'Executing      : ', ExecName
+      print*, 'nCells         : ', nCells ( 1 ), nCells ( 2 )
+      print*, 'Max iterations : ', MAX_ITERATIONS
+      print*, ''
+      
+    else
+      print*, 'Usage: ' // trim ( ExecName ) // ' <nCells> <MaxIterations>'
+      print*, '  where <nCells> and <MaxIterations> are integers.'
+    end if
+    
+    !-- End parsing 
       
     allocate ( T      ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     allocate ( T_Init ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
@@ -482,12 +509,10 @@ program Laplace
     T_Init, &     !-- A copy of initial condition
     T_Results     !-- A copy of results from serial calculation
     
-  !nCells = [ 4096, 4096 ]
-  nCells = [ 2048, 2048 ]
+  nCells = -1
   
-  read*, nCells, nIterations
-  
-  call Initialize ( nCells, T, T_Init )
+  call Initialize ( T, T_Init, nCells )
+  if ( nCells ( 1 ) == -1 ) return
   
   call Compute ( T, nCells, Residual, nIterations )
   T_Results = T
