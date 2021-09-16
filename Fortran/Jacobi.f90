@@ -83,7 +83,7 @@ contains
     nIterations = 0
     Residual       = huge ( 1.0_real64 )
     
-    do while ( nIterations <= MAX_ITERATIONS &
+    do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
                
       do jV = 1, nCells ( 2 )
@@ -100,8 +100,6 @@ contains
       T = T_New
     
     end do
-    
-    nIterations = nIterations - 1
     
   end subroutine Compute
  
@@ -128,7 +126,7 @@ contains
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
     
-    do while ( nIterations <= MAX_ITERATIONS &
+    do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
       !$OMP parallel do collapse ( 2 )
       do jV = 1, nCells ( 2 )
@@ -142,7 +140,7 @@ contains
       
       nIterations = nIterations + 1
       
-      Residual = tiny ( 1.0_real64 )
+      Residual = 0.0
       
       !$OMP parallel do collapse ( 2 ) &
       !$OMP   reduction ( max : Residual )
@@ -156,8 +154,6 @@ contains
     
     end do
     
-    nIterations = nIterations - 1
-        
   end subroutine Compute_CPU_OpenMP
   
   
@@ -183,7 +179,7 @@ contains
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
     
-    do while ( nIterations <= MAX_ITERATIONS &
+    do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
       !$OMP target teams distribute parallel do collapse ( 2 )
       do jV = 1, nCells ( 2 )
@@ -197,7 +193,7 @@ contains
       
       nIterations = nIterations + 1
       
-      Residual = tiny ( 1.0_real64 )
+      Residual = 0.0
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
       !$OMP   reduction ( max : Residual )
@@ -211,8 +207,6 @@ contains
     
     end do
     
-    nIterations = nIterations - 1
-        
   end subroutine Compute_GPU_OpenMP_1
   
   
@@ -238,7 +232,7 @@ contains
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
     
-    do while ( nIterations <= MAX_ITERATIONS &
+    do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
       !$OMP target teams distribute parallel do collapse ( 2 ) &
       !$OMP map ( T, T_New )
@@ -253,7 +247,7 @@ contains
       
       nIterations = nIterations + 1
       
-      Residual = tiny ( 1.0_real64 )
+      Residual = 0.0
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
       !$OMP   reduction ( max : Residual ) map ( T, T_New )
@@ -267,8 +261,6 @@ contains
     
     end do
     
-    nIterations = nIterations - 1
-        
   end subroutine Compute_GPU_OpenMP_2
   
   
@@ -294,7 +286,7 @@ contains
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
     
-    do while ( nIterations <= MAX_ITERATIONS &
+    do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
       !$OMP target teams distribute parallel do collapse ( 2 ) &
       !$OMP map ( to : T ) map ( from : T_New )
@@ -309,7 +301,7 @@ contains
       
       nIterations = nIterations + 1
       
-      Residual = tiny ( 1.0_real64 )
+      Residual = 0.0
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
       !$OMP   reduction ( max : Residual ) &
@@ -324,8 +316,6 @@ contains
     
     end do
     
-    nIterations = nIterations - 1
-        
   end subroutine Compute_GPU_OpenMP_3
   
   
@@ -354,7 +344,7 @@ contains
     !$OMP target enter data map ( to : T )
     !$OMP target enter data map ( alloc : T_New )
     
-    do while ( nIterations <= MAX_ITERATIONS &
+    do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
       !$OMP target teams distribute parallel do collapse ( 2 )
       do jV = 1, nCells ( 2 )
@@ -368,7 +358,7 @@ contains
       
       nIterations = nIterations + 1
       
-      Residual = tiny ( 1.0_real64 )
+      Residual = 0.0
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
       !$OMP   reduction ( max : Residual ) 
@@ -385,8 +375,6 @@ contains
     !$OMP target exit data map ( delete : T_New )
     !$OMP target exit data map ( from : T )
     
-    nIterations = nIterations - 1
-        
   end subroutine Compute_GPU_OpenMP_4
   
   
@@ -492,7 +480,7 @@ program Jacobi
   real ( real64 ), dimension ( :, : ), allocatable :: &
     T, &          !-- 
     T_Init, &     !-- A copy of initial condition
-    T_Results     !-- A copy of results from serial calculation
+    T_Reference   !-- A copy of results from serial calculation
   logical :: &
     Validation
     
@@ -513,7 +501,7 @@ program Jacobi
                      nIterations = nIterations )
   
   !-- Save Results for other subroutine validation
-  T_Results = T
+  T_Reference = T
   
   
   !-- CPU OpenMP
@@ -523,7 +511,7 @@ program Jacobi
   call Compute_CPU_OpenMP ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
-  call Validate ( T, T_Results, Validation, ValidationError )
+  call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
          ( 'CPU OpenMP', Validation, TimeTotal, TimeSerial / TimeTotal, &
@@ -539,7 +527,7 @@ program Jacobi
   call Compute_GPU_OpenMP_1 ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
-  call Validate ( T, T_Results, Validation, ValidationError )   
+  call Validate ( T, T_Reference, Validation, ValidationError )   
   call ShowResults &
          ( 'GPU_OpenMP_1', Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations )   
@@ -552,7 +540,7 @@ program Jacobi
   call Compute_GPU_OpenMP_2 ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
-  call Validate ( T, T_Results, Validation, ValidationError )
+  call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
          ( 'GPU_OpenMP_2', Validation, TimeTotal, TimeSerial / TimeTotal, &
@@ -567,7 +555,7 @@ program Jacobi
   call Compute_GPU_OpenMP_3 ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
-  call Validate ( T, T_Results, Validation, ValidationError )
+  call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
          ( 'GPU_OpenMP_3', Validation, TimeTotal, TimeSerial / TimeTotal, &
@@ -582,7 +570,7 @@ program Jacobi
   call Compute_GPU_OpenMP_4 ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
-  call Validate ( T, T_Results, Validation, ValidationError )
+  call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
          ( 'GPU_OpenMP_4', Validation, TimeTotal, TimeSerial / TimeTotal, &

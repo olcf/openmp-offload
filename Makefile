@@ -12,6 +12,7 @@ all: Jacobi.Fortran Jacobi.C
 	
 Jacobi.Fortran : Jacobi.f90
 	$(FC) $(FFLAGS) $(LIBS) $< -o ${@}.${COMPILER}.exe
+	rm -f *.mod
 
 Jacobi.C : Jacobi.c
 	$(CC) $(FFLAGS) $(LIBS) $< -o ${@}.${COMPILER}.exe
