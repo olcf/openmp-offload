@@ -105,25 +105,6 @@ void kernel_omp_cpu(double *T, int max_iterations) {
   free(T_new);
 }
 
-void validate(double *T, double *T_results) {
-
-  double max_error = 0;
-#pragma omp parallel for collapse(2) reduction(max : max_error)
-  for (unsigned i = 1; i < n_cells; i++) {
-    for (unsigned j = 1; j < n_cells; ++j) {
-      double error = fabs(((T(i, j) - T_results(i, j)) / T_results(i, j)));
-      max_error = MAX(error, max_error);
-    }
-  }
-
-  printf("Validation maximum error = %.6lf : ", max_error);
-  if (max_error < 20 * MAX_RESIDUAL) {
-    printf("PASSED.\n");
-  } else {
-    printf(" VALIDATION ERROR.\n");
-  }
-}
-
 void kernel_gpu_teams(double *T, int max_iterations) {
 
   int iteration = 0;
@@ -146,8 +127,7 @@ void kernel_gpu_teams(double *T, int max_iterations) {
     residual = 0.0;
 
     // compute the largest change and copy T_new to T
-#pragma omp target teams distribute collapse(2) reduction(max                  \
-                                                          : residual)          \
+#pragma omp target teams distribute collapse(2) reduction(max: residual)         \
     map(T[:SIZE], T_new[:SIZE])
     for (unsigned int i = 1; i <= n_cells; i++) {
       for (unsigned int j = 1; j <= n_cells; j++) {
@@ -186,8 +166,7 @@ void kernel_gpu_teams_parallel(double *T, int max_iterations) {
 
     // compute the largest change and copy T_new to T
 #pragma omp target teams distribute parallel for simd collapse(2)              \
-    reduction(max                                                              \
-              : residual) map(T[:SIZE], T_new[:SIZE])
+    reduction(max: residual) map(T[:SIZE], T_new[:SIZE])
     for (unsigned int i = 1; i <= n_cells; i++) {
       for (unsigned int j = 1; j <= n_cells; j++) {
         residual = MAX(fabs(T_new(i, j) - T(i, j)), residual);
@@ -244,6 +223,25 @@ void kernel_gpu_teams_parallel_data(double *T, int max_iterations) {
 #pragma omp target exit data map(delete : T[:SIZE]) map(delete : T_new[:SIZE])
 }
 
+void validate(double *T, double *T_results) {
+
+  double max_error = 0;
+#pragma omp parallel for collapse(2) reduction(max : max_error)
+  for (unsigned i = 1; i < n_cells; i++) {
+    for (unsigned j = 1; j < n_cells; ++j) {
+      double error = fabs(((T(i, j) - T_results(i, j)) / T_results(i, j)));
+      max_error = MAX(error, max_error);
+    }
+  }
+
+  printf("Validation maximum error = %.6lf : ", max_error);
+  if (max_error < 20 * MAX_RESIDUAL) {
+    printf("PASSED.\n");
+  } else {
+    printf(" VALIDATION ERROR.\n");
+  }
+}
+
 int main(int argc, char *argv[]) {
 
   int max_iterations; // maximal number of iterations
@@ -279,14 +277,14 @@ int main(int argc, char *argv[]) {
     kernel_serial(T_results, max_iterations);
     double end = omp_get_wtime();
     serial_kernel_time = end - start;
-    printf("CPU serial kernel time = %.6f Seconds\n\n", end - start);
-    printf("================================================================= \n");
+    printf("CPU serial kernel time = %.6f Seconds\n", end - start);
+    printf("================================================================= \n\n");
   }
 
   {
     init(T);
     double start = omp_get_wtime();
-    printf("================CPU OpenMP Kernel================================ \n");
+    printf("=============== CPU OpenMP Kernel =============================== \n");
     kernel_omp_cpu(T, max_iterations);
     double end = omp_get_wtime();
     validate(T, T_results);
@@ -299,7 +297,7 @@ int main(int argc, char *argv[]) {
 
   {
     init(T);
-    printf("================GPU Teams Kernel================================ \n");
+    printf("=============== GPU Teams Kernel =============================== \n");
     double start = omp_get_wtime();
     kernel_gpu_teams(T, max_iterations);
     double end = omp_get_wtime();
@@ -312,7 +310,7 @@ int main(int argc, char *argv[]) {
 
   {
     init(T);
-    printf("================GPU Teams Distribute Parallel =================== \n");
+    printf("=============== GPU Teams Distribute Parallel =================== \n");
     double start = omp_get_wtime();
     kernel_gpu_teams_parallel(T, max_iterations);
     double end = omp_get_wtime();
@@ -326,7 +324,7 @@ int main(int argc, char *argv[]) {
   }
 
   {
-    printf("================GPU Teams Distribute Parallel Data =============== \n");
+    printf("=============== GPU Teams Distribute Parallel Data =============== \n");
     init(T);
     double start = omp_get_wtime();
     kernel_gpu_teams_parallel_data(T, max_iterations);
