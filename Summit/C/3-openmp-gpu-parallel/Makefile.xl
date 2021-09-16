@@ -1,0 +1,8 @@
+#module load xl 
+COMPILER=xl
+
+TARGETS=jacobi.$(COMPILER)
+
+-include ../Makefile.$(COMPILER)
+
+

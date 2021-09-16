@@ -1,0 +1,8 @@
+#module load  gcc/11.1.0
+
+COMPILER=gcc
+
+
+TARGETS=laplace.$(COMPILER)
+
+-include ../Makefile.$(COMPILER)
