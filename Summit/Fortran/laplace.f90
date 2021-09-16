@@ -7,7 +7,7 @@ module Laplacian_Form
   public
   
   integer, parameter :: &
-    MAX_ITERATIONS = 100
+    MAX_ITERATIONS = 40
     !MAX_ITERATIONS = 102400
   real ( real64 ), parameter :: &
     MAX_RESIDUAL = 1e-5_real64
@@ -482,10 +482,10 @@ program Laplace
     T_Init, &     !-- A copy of initial condition
     T_Results     !-- A copy of results from serial calculation
     
-  !nCells = [ 4096, 4096 ]
-  nCells = [ 2048, 2048 ]
+  nCells = [ 4096, 4096 ]
+  !nCells = [ 100, 100 ]
   
-  read*, nCells, nIterations
+  !read*, nCells, nIterations
   
   call Initialize ( nCells, T, T_Init )
   
