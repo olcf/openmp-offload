@@ -1,4 +1,4 @@
-module Laplacian_Form
+module Jacobi_Form
 
   use omp_lib
   use iso_fortran_env
@@ -488,13 +488,13 @@ contains
   end subroutine Validate 
   
 
-end module Laplacian_Form
+end module Jacobi_Form
 
 
-program Laplace
+program Jacobi
 
   use iso_fortran_env
-  use Laplacian_Form
+  use Jacobi_Form
   
   implicit none
   
@@ -538,4 +538,4 @@ program Laplace
   call Compute_GPU_OpenMP_4 ( T, nCells, Residual, nIterations )
   call Validate ( T, T_Results )
   
-end program Laplace
+end program Jacobi
