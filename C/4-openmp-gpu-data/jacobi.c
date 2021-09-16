@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
   double omp_teams_parallel_data_time = end - start;
 
   printf("CPU serial kernel time = %.6lf Sec\n", serial_cpu_time);
-  printf("OpenMP GPU Teams Distribute Parallel time = %.6lf Sec\n",
+  printf("OpenMP GPU Teams Distribute Parallel data time = %.6lf Sec\n",
          omp_teams_parallel_data_time);
   printf("Number of OpenMP threads = %d\n", omp_get_max_threads());
   printf("Speedup = %.6lf\n", serial_cpu_time / omp_teams_parallel_data_time);
