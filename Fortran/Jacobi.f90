@@ -21,10 +21,18 @@ contains
     integer, dimension ( : ), intent ( out ) :: &
       nCells
       
+    integer :: &
+      iS, &
+      SeedSize
+    integer, dimension ( : ), allocatable :: &
+      Seed
+    real ( real64 ) :: &
+      TestRandom
     character ( 31 ) :: &
       ExecName, &
       nCellsString, &
       MaxIterationsString
+    
       
     !-- Parse command line options
     call get_command_argument ( 0, Value = ExecName )
@@ -52,6 +60,15 @@ contains
     allocate ( T      ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     allocate ( T_Init ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     
+    !-- Initialize seed for random number
+    call random_seed ( size = SeedSize )
+    allocate ( Seed ( SeedSize ) )
+    do iS = 1, SeedSize
+        call system_clock ( Seed ( iS ), count_rate = TestRandom )
+    end do
+    call random_seed ( put = Seed )
+    
+    !-- Initialize T with random number
     call random_number ( T )
     T_Init = T
          
@@ -78,10 +95,10 @@ contains
     integer :: &
       iV, jV
       
-    allocate ( T_New, mold = T )
+    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     
     nIterations = 0
-    Residual       = huge ( 1.0_real64 )
+    Residual    = huge ( 1.0_real64 )
     
     do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
@@ -97,8 +114,10 @@ contains
       nIterations = nIterations + 1
       
       Residual = maxval ( abs ( T_new - T ) )
-      T = T_New
-    
+      
+      T ( 1 : nCells ( 1 ), 1 : nCells ( 2 ) ) &
+        = T_New ( 1 : nCells ( 1 ), 1 : nCells ( 2 ) )
+      
     end do
     
   end subroutine Compute
@@ -121,7 +140,7 @@ contains
     integer :: &
       iV, jV
       
-    allocate ( T_New, mold = T )
+    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
@@ -174,7 +193,7 @@ contains
     integer :: &
       iV, jV
       
-    allocate ( T_New, mold = T )
+    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
@@ -227,7 +246,7 @@ contains
     integer :: &
       iV, jV
       
-    allocate ( T_New, mold = T )
+    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
@@ -281,7 +300,7 @@ contains
     integer :: &
       iV, jV
       
-    allocate ( T_New, mold = T )
+    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
@@ -336,7 +355,7 @@ contains
     integer :: &
       iV, jV
       
-    allocate ( T_New, mold = T )
+    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     
     nIterations = 0
     Residual    = huge ( 1.0_real64 )
@@ -441,9 +460,9 @@ contains
     associate ( &
       T1_P => T1 ( 1 : size ( T1, dim = 1 ) - 2, &
                    1 : size ( T1, dim = 2 ) - 2 ), &
-      T2_P => T1 ( 1 : size ( T2, dim = 1 ) - 2, &
+      T2_P => T2 ( 1 : size ( T2, dim = 1 ) - 2, &
                    1 : size ( T2, dim = 2 ) - 2 ) )
-                    
+    
     Error = maxval ( abs ( ( T1_P - T2_P ) / ( T1_P ) ) )
     
     if ( Error <= 20 * MAX_RESIDUAL ) then
@@ -503,7 +522,7 @@ program Jacobi
   !-- Save Results for other subroutine validation
   T_Reference = T
   
-  
+
   !-- CPU OpenMP
   T = T_Init
   
@@ -512,7 +531,7 @@ program Jacobi
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )
-  
+
   call ShowResults &
          ( 'CPU OpenMP', Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations, &
@@ -528,10 +547,11 @@ program Jacobi
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )   
+
   call ShowResults &
          ( 'GPU_OpenMP_1', Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations )   
-  
+
   !-- GPU_OpenMP_2
 
   T = T_Init
