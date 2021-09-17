@@ -100,9 +100,6 @@ void kernel_gpu_teams_parallel_data_implicit(double (&T)[SIZE], int max_iteratio
   }
   printf("Residual = %.9lf\n", residual);
 
-#pragma omp target update from(T[:SIZE])
-#pragma omp target exit data map(delete : T[:SIZE])    \
-            map(delete : T_new[SIZE])
 }
 
 void validate(double (&T)[SIZE], double (&T_results)[SIZE]) {
