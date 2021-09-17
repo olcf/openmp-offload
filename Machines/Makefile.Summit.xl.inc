@@ -1,4 +1,5 @@
 CC       =  xlc_r
+CXX      =  xlC_r
 FC       =  xlf2008_r
 
 CFLAGS   = -O2 -qsmp=omp -qoffload

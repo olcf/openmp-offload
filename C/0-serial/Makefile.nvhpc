@@ -1,8 +1,0 @@
-#module load nvhpc/21.7 
-COMPILER=nvhpc
-
-TARGETS=jacobi.$(COMPILER)
-
--include ../Makefile.$(COMPILER)
-
-
