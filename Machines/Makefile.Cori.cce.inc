@@ -16,19 +16,6 @@ CFLAGS=-Ofast -fopenmp -fopenmp-targets=nvptx64 -Xopenmp-target=nvptx64 -march=s
 CXXFLAGS=-Ofast -fopenmp -fopenmp-targets=nvptx64 -Xopenmp-target=nvptx64 -march=sm_70
 FFLAGS=-O3 -homp -h noacc -haccel=nvidia70
 
-#LIBS=-Wl,-rpath=$(GCC_ROOT)/lib64 -foffload="-latomic -lm" -lm 
-LIBS=
+LIBS=-Wl,-rpath=$(GCC_ROOT)/lib64 
 
-all : $(TARGETS)
-
-%.cce : %.c
-	- $(CC) $(CFLAGS)  $(LIBS) $< -o $@
-
-%.cce : %.cpp
-	- $(CXX) $(CXXFLAGS)  $(LIBS) $< -o $@
-
-%.cce : %.f90
-	- $(FC) $(FFLAGS) $(LIBS) $< -o $@
-
-clean:
-	rm -rf $(TARGETS) *.o
+COMPILER = cce
