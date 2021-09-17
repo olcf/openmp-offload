@@ -89,8 +89,7 @@ void kernel_gpu_teams_parallel_data_implicit(double (&T)[SIZE], int max_iteratio
     // compute the largest change and copy T_new to T
 
 #pragma omp target teams distribute parallel for simd collapse(2)              \
-    reduction(max                                                              \
-              : residual)
+    reduction(max: residual) map(residual)
     for (unsigned int i = 1; i <= n_cells; i++) {
       for (unsigned int j = 1; j <= n_cells; j++) {
         residual = MAX(fabs(T_new(i, j) - T(i, j)), residual);
