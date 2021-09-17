@@ -215,7 +215,7 @@ contains
       Residual = 0.0
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP   reduction ( max : Residual )
+      !$OMP   reduction ( max : Residual ) map ( Residual )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
@@ -269,7 +269,7 @@ contains
       Residual = 0.0
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP   reduction ( max : Residual ) map ( T, T_New )
+      !$OMP   reduction ( max : Residual ) map ( T, T_New, Residual )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
@@ -324,7 +324,7 @@ contains
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
       !$OMP   reduction ( max : Residual ) &
-      !$OMP   map ( tofrom : T ) map ( to : T_New )
+      !$OMP   map ( tofrom : T ) map ( to : T_New ) map ( Residual )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
@@ -380,7 +380,7 @@ contains
       Residual = 0.0
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP   reduction ( max : Residual ) 
+      !$OMP   reduction ( max : Residual ) map ( Residual )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
