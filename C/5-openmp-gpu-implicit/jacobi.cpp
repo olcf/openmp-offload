@@ -5,7 +5,7 @@
 #include <string.h>
 #include <time.h>
 
-const unsigned int n_cells = 4096;
+const unsigned int n_cells = 32;
 const unsigned int SIZE = (n_cells + 2) * (n_cells +2);
 
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
@@ -17,6 +17,8 @@ const unsigned int SIZE = (n_cells + 2) * (n_cells +2);
 // smallest permitted change in temperature
 double MAX_RESIDUAL = 1.e-5;
 
+// Declaring T globally due to issue with nvhpc
+static double T[SIZE];    // temperature grid
 // initialize grid and boundary conditions
 void init(double (&T)[SIZE]) {
 
@@ -35,7 +37,7 @@ void init(double (&T)[SIZE]) {
   }
 }
 
-void kernel_serial(double (&T)[SIZE], int max_iterations) {
+inline void kernel_serial(double (&T)[SIZE], int max_iterations) {
 
   int iteration = 0;
   double residual = 1.e5;
@@ -66,7 +68,7 @@ void kernel_serial(double (&T)[SIZE], int max_iterations) {
 
 }
 
-void kernel_gpu_teams_parallel_data_implicit(double (&T)[SIZE], int max_iterations) {
+void kernel_gpu_teams_parallel_data_implicit(int max_iterations) {
 
   int iteration = 0;
   double residual = 1.e5;
@@ -88,7 +90,7 @@ void kernel_gpu_teams_parallel_data_implicit(double (&T)[SIZE], int max_iteratio
 
     // compute the largest change and copy T_new to T
 
-#pragma omp target teams distribute parallel for simd collapse(2)              \
+#pragma omp target teams distribute parallel for simd collapse(2)  \
     reduction(max: residual) map(residual)
     for (unsigned int i = 1; i <= n_cells; i++) {
       for (unsigned int j = 1; j <= n_cells; j++) {
@@ -124,7 +126,7 @@ void validate(double (&T)[SIZE], double (&T_results)[SIZE]) {
 int main(int argc, char *argv[]) {
   int max_iterations; // maximal number of iterations
 
-  double T[SIZE];    // temperature grid
+  //static double T[SIZE];    // temperature grid
   double T_results[SIZE]; // CPU results for validation
 
   if (argc < 2) {
@@ -146,7 +148,8 @@ int main(int argc, char *argv[]) {
   init(T);
 
   start = omp_get_wtime();
-  kernel_gpu_teams_parallel_data_implicit(T, max_iterations);
+  // Not passing T into the kernel due to issue with nvhpc
+  kernel_gpu_teams_parallel_data_implicit(max_iterations);
   end = omp_get_wtime();
 
   validate(T, T_results);
