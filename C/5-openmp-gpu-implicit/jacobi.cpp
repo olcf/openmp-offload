@@ -126,7 +126,6 @@ void validate(double (&T)[SIZE], double (&T_results)[SIZE]) {
 int main(int argc, char *argv[]) {
   int max_iterations; // maximal number of iterations
 
-  //static double T[SIZE];    // temperature grid
   double T_results[SIZE]; // CPU results for validation
 
   if (argc < 2) {
