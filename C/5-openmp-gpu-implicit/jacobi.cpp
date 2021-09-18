@@ -37,7 +37,7 @@ void init(double (&T)[SIZE]) {
   }
 }
 
-inline void kernel_serial(double (&T)[SIZE], int max_iterations) {
+void kernel_serial(double (&T)[SIZE], int max_iterations) {
 
   int iteration = 0;
   double residual = 1.e5;
