@@ -82,7 +82,7 @@ void kernel_gpu_teams_parallel(double *T, int max_iterations) {
 
     // main computational kernel, average over neighbours in the grid
 #pragma omp target teams distribute collapse(2) \
-  map(T[:SIZE], T_new[:SIZE])
+          map(T[:SIZE], T_new[:SIZE])
     for (unsigned i = 1; i <= n_cells; i++)
       for (unsigned j = 1; j <= n_cells; j++)
         T_new(i, j) =
