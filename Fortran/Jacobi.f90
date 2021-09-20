@@ -1,15 +1,26 @@
 module Jacobi_Form
 
-  use omp_lib
+  use omp_lib 
   use iso_fortran_env
   
   implicit none
-  public
+  private
   
   integer :: &
     MAX_ITERATIONS = 10000
   real ( real64 ), parameter :: &
     MAX_RESIDUAL = 1e-5_real64
+    
+  public :: &
+    Initialize, &
+    Compute, &
+    Compute_OpenMP_CPU, &
+    Compute_OpenMP_GPU_Teams, &
+    Compute_OpenMP_GPU_Teams_Parallel, &
+    Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map, &
+    Compute_OpenMP_GPU_Teams_Parallel_Data, &
+    Validate, &
+    ShowResults
 
 contains 
 
@@ -123,7 +134,8 @@ contains
   end subroutine Compute
  
  
-  subroutine Compute_CPU_OpenMP ( T, nCells, Residual, nIterations )
+  subroutine Compute_OpenMP_CPU &
+               ( T, nCells, Residual, nIterations )
     
     real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
       T
@@ -173,10 +185,123 @@ contains
     
     end do
     
-  end subroutine Compute_CPU_OpenMP
+  end subroutine Compute_OpenMP_CPU
   
   
-  subroutine Compute_GPU_OpenMP_1 ( T, nCells, Residual, nIterations )
+  subroutine Compute_OpenMP_GPU_Teams &
+               ( T, nCells, Residual, nIterations )
+    
+    real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
+      T
+    integer, dimension ( : ), intent ( in ) :: &
+      nCells
+    real ( real64 ), intent ( out ) :: &
+      Residual
+    integer, intent ( out ) :: &
+      nIterations
+    
+    real ( real64 ), dimension ( :, : ), allocatable :: &
+      T_New
+    
+    integer :: &
+      iV, jV
+      
+    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
+    
+    nIterations = 0
+    Residual    = huge ( 1.0_real64 )
+    
+    do while ( nIterations < MAX_ITERATIONS &
+               .and. Residual  > MAX_RESIDUAL )
+      !$OMP target teams distribute collapse ( 2 ) &
+      !$OMP map ( to: T ) map ( from: T_New )
+      do jV = 1, nCells ( 2 )
+        do iV = 1, nCells ( 1 )
+          T_New ( iV, jV ) &
+            = 0.25 * (   T ( iV, jV - 1 ) + T ( iV, jV + 1 ) &
+                       + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
+        end do
+      end do 
+      !$OMP end target teams distribute 
+      
+      nIterations = nIterations + 1
+      
+      Residual = 0.0
+      
+      !$OMP target teams distribute collapse ( 2 ) &
+      !$OMP   reduction ( max : Residual ) map ( Residual ) &
+      !$OMP   map ( from: T ) map ( to: T_New ) map ( tofrom: Residual )
+      do jV = 1, nCells ( 2 )
+        do iV = 1, nCells ( 1 )
+          Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
+          T ( iV, jV ) = T_New ( iV, jV )
+        end do
+      end do 
+      !$OMP end target teams distribute
+    
+    end do
+    
+  end subroutine Compute_OpenMP_GPU_Teams
+  
+  
+  subroutine Compute_OpenMP_GPU_Teams_Parallel &
+               ( T, nCells, Residual, nIterations )
+    
+    real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
+      T
+    integer, dimension ( : ), intent ( in ) :: &
+      nCells
+    real ( real64 ), intent ( out ) :: &
+      Residual
+    integer, intent ( out ) :: &
+      nIterations
+    
+    real ( real64 ), dimension ( :, : ), allocatable :: &
+      T_New
+    
+    integer :: &
+      iV, jV
+      
+    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
+    
+    nIterations = 0
+    Residual    = huge ( 1.0_real64 )
+    
+    do while ( nIterations < MAX_ITERATIONS &
+               .and. Residual  > MAX_RESIDUAL )
+      !$OMP target teams distribute parallel do collapse ( 2 ) &
+      !$OMP map ( to: T ) map ( from: T_New )
+      do jV = 1, nCells ( 2 )
+        do iV = 1, nCells ( 1 )
+          T_New ( iV, jV ) &
+            = 0.25 * (   T ( iV, jV - 1 ) + T ( iV, jV + 1 ) &
+                       + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
+        end do
+      end do 
+      !$OMP end target teams distribute parallel do
+      
+      nIterations = nIterations + 1
+      
+      Residual = 0.0
+      
+      !$OMP target teams distribute parallel do collapse ( 2 ) &
+      !$OMP   reduction ( max : Residual ) &
+      !$OMP   map ( from: T ) map ( to: T_New ) map ( tofrom: Residual )
+      do jV = 1, nCells ( 2 )
+        do iV = 1, nCells ( 1 )
+          Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
+          T ( iV, jV ) = T_New ( iV, jV )
+        end do
+      end do 
+      !$OMP end target teams distribute parallel do
+    
+    end do
+    
+  end subroutine Compute_OpenMP_GPU_Teams_Parallel
+  
+  
+  subroutine Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map &
+               ( T, nCells, Residual, nIterations )
     
     real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
       T
@@ -215,7 +340,7 @@ contains
       Residual = 0.0
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP   reduction ( max : Residual ) map ( Residual )
+      !$OMP   reduction ( max : Residual )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
@@ -226,119 +351,11 @@ contains
     
     end do
     
-  end subroutine Compute_GPU_OpenMP_1
+  end subroutine Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map
   
   
-  subroutine Compute_GPU_OpenMP_2 ( T, nCells, Residual, nIterations )
-    
-    real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
-      T
-    integer, dimension ( : ), intent ( in ) :: &
-      nCells
-    real ( real64 ), intent ( out ) :: &
-      Residual
-    integer, intent ( out ) :: &
-      nIterations
-    
-    real ( real64 ), dimension ( :, : ), allocatable :: &
-      T_New
-    
-    integer :: &
-      iV, jV
-      
-    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
-    
-    nIterations = 0
-    Residual    = huge ( 1.0_real64 )
-    
-    do while ( nIterations < MAX_ITERATIONS &
-               .and. Residual  > MAX_RESIDUAL )
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP map ( T, T_New )
-      do jV = 1, nCells ( 2 )
-        do iV = 1, nCells ( 1 )
-          T_New ( iV, jV ) &
-            = 0.25 * (   T ( iV, jV - 1 ) + T ( iV, jV + 1 ) &
-                       + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
-        end do
-      end do 
-      !$OMP end target teams distribute parallel do
-      
-      nIterations = nIterations + 1
-      
-      Residual = 0.0
-      
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP   reduction ( max : Residual ) map ( T, T_New, Residual )
-      do jV = 1, nCells ( 2 )
-        do iV = 1, nCells ( 1 )
-          Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
-          T ( iV, jV ) = T_New ( iV, jV )
-        end do
-      end do 
-      !$OMP end target teams distribute parallel do
-    
-    end do
-    
-  end subroutine Compute_GPU_OpenMP_2
-  
-  
-  subroutine Compute_GPU_OpenMP_3 ( T, nCells, Residual, nIterations )
-    
-    real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
-      T
-    integer, dimension ( : ), intent ( in ) :: &
-      nCells
-    real ( real64 ), intent ( out ) :: &
-      Residual
-    integer, intent ( out ) :: &
-      nIterations
-    
-    real ( real64 ), dimension ( :, : ), allocatable :: &
-      T_New
-    
-    integer :: &
-      iV, jV
-      
-    allocate ( T_New ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
-    
-    nIterations = 0
-    Residual    = huge ( 1.0_real64 )
-    
-    do while ( nIterations < MAX_ITERATIONS &
-               .and. Residual  > MAX_RESIDUAL )
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP map ( to : T ) map ( from : T_New )
-      do jV = 1, nCells ( 2 )
-        do iV = 1, nCells ( 1 )
-          T_New ( iV, jV ) &
-            = 0.25 * (   T ( iV, jV - 1 ) + T ( iV, jV + 1 ) &
-                       + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
-        end do
-      end do 
-      !$OMP end target teams distribute parallel do
-      
-      nIterations = nIterations + 1
-      
-      Residual = 0.0
-      
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP   reduction ( max : Residual ) &
-      !$OMP   map ( tofrom : T ) map ( to : T_New ) map ( Residual )
-      do jV = 1, nCells ( 2 )
-        do iV = 1, nCells ( 1 )
-          Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
-          T ( iV, jV ) = T_New ( iV, jV )
-        end do
-      end do 
-      !$OMP end target teams distribute parallel do
-    
-    end do
-    
-  end subroutine Compute_GPU_OpenMP_3
-  
-  
-  subroutine Compute_GPU_OpenMP_4 ( T, nCells, Residual, nIterations )
+  subroutine Compute_OpenMP_GPU_Teams_Parallel_Data &
+               ( T, nCells, Residual, nIterations )
     
     real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
       T
@@ -394,7 +411,7 @@ contains
     !$OMP target exit data map ( delete : T_New )
     !$OMP target exit data map ( from : T )
     
-  end subroutine Compute_GPU_OpenMP_4
+  end subroutine Compute_OpenMP_GPU_Teams_Parallel_Data
   
   
   subroutine ShowResults &
@@ -481,6 +498,7 @@ end module Jacobi_Form
 
 program Jacobi
 
+  use omp_lib
   use iso_fortran_env
   use Jacobi_Form
   
@@ -522,18 +540,18 @@ program Jacobi
   !-- Save Results for other subroutine validation
   T_Reference = T
   
-
   !-- CPU OpenMP
   T = T_Init
   
   TimeStart = omp_get_wtime ( )
-  call Compute_CPU_OpenMP ( T, nCells, Residual, nIterations )
+  call Compute_OpenMP_CPU &
+         ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )
 
   call ShowResults &
-         ( 'CPU OpenMP', Validation, TimeTotal, TimeSerial / TimeTotal, &
+         ( 'OpenMP_CPU', Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations, &
            CPU_nThreadsOptions = .true. )              
   
@@ -543,13 +561,15 @@ program Jacobi
   T = T_Init
   
   TimeStart = omp_get_wtime ( )   
-  call Compute_GPU_OpenMP_1 ( T, nCells, Residual, nIterations )
+  call Compute_OpenMP_GPU_Teams &
+         ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )   
 
   call ShowResults &
-         ( 'GPU_OpenMP_1', Validation, TimeTotal, TimeSerial / TimeTotal, &
+         ( 'OpenMP_GPU_Teams', &
+           Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations )   
 
   !-- GPU_OpenMP_2
@@ -557,13 +577,15 @@ program Jacobi
   T = T_Init
   
   TimeStart = omp_get_wtime ( )
-  call Compute_GPU_OpenMP_2 ( T, nCells, Residual, nIterations )
+  call Compute_OpenMP_GPU_Teams_Parallel &
+         ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
-         ( 'GPU_OpenMP_2', Validation, TimeTotal, TimeSerial / TimeTotal, &
+         ( 'Compute_OpenMP_GPU_Teams_Parallel', &
+           Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations )
   
   
@@ -572,13 +594,15 @@ program Jacobi
   T = T_Init
   
   TimeStart = omp_get_wtime ( )
-  call Compute_GPU_OpenMP_3 ( T, nCells, Residual, nIterations )
+  call Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map &
+         ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
-         ( 'GPU_OpenMP_3', Validation, TimeTotal, TimeSerial / TimeTotal, &
+         ( 'Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map', &
+           Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations )
   
   
@@ -587,14 +611,15 @@ program Jacobi
   T = T_Init
   
   TimeStart = omp_get_wtime ( )
-  call Compute_GPU_OpenMP_4 ( T, nCells, Residual, nIterations )
+  call Compute_OpenMP_GPU_Teams_Parallel_Data &
+         ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
-         ( 'GPU_OpenMP_4', Validation, TimeTotal, TimeSerial / TimeTotal, &
+         ( 'Compute_OpenMP_GPU_Teams_Parallel_Data', &
+           Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations )
     
-  
 end program Jacobi
