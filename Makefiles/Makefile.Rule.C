@@ -1,4 +1,4 @@
-include ../../Machines/Makefile.inc
+include ../../Makefiles/Makefile.inc
 
 jacobi.C : jacobi.c
 	$(CC) $(FFLAGS) $(LIBS) $< -o ${@}.${COMPILER}.exe
