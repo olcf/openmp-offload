@@ -1,0 +1,8 @@
+include ../../Makefiles/Makefile.inc
+
+jacobi.Fortran : Jacobi.f90
+	$(FC) $(FFLAGS) $(LIBS) $< -o ${@}.${COMPILER}.exe
+	rm -f *.mod
+
+clean:
+	rm -f *.o *.mod *.exe
