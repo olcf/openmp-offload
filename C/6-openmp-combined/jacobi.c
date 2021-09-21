@@ -52,7 +52,7 @@ void kernel_serial(double *T, int max_iterations) {
         T_new(i, j) =
             0.25 * (T(i + 1, j) + T(i - 1, j) + T(i, j + 1) + T(i, j - 1));
 
-    // reset dt
+    // reset residual
     residual = 0.0;
 
     // compute the largest change and copy T_new to T
