@@ -139,6 +139,8 @@ int main(int argc, char *argv[]) {
     n_cells = atoi(argv[1]);
     max_iterations = atoi(argv[2]);
   }
+  printf("Using number of cells = %u\n", n_cells);
+  printf("Using maximum iteration count = %u\n", max_iterations);
 
   SIZE = (n_cells + 2) * (n_cells + 2);
 
