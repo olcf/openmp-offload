@@ -74,11 +74,11 @@ int main(int argc, char *argv[]) {
   double *T;      // temperature grid
 
   if (argc < 3) {
-    printf("Usage: %s number_of_iterations number_of_cells\n", argv[0]);
+    printf("Usage: %s number_of_cells number_of_iterations\n", argv[0]);
     exit(1);
   } else {
-    max_iterations = atoi(argv[1]);
-    n_cells = atoi(argv[2]);
+    n_cells = atoi(argv[1]);
+    max_iterations = atoi(argv[2]);
   }
 
   SIZE = (n_cells + 2) * (n_cells + 2);
