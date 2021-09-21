@@ -124,7 +124,7 @@ void validate(double (&T)[SIZE], double (&T_results)[SIZE]) {
 }
 
 int main(int argc, char *argv[]) {
-  int max_iterations; // maximal number of iterations
+  unsigned int max_iterations; // maximal number of iterations
 
   double T_results[SIZE]; // CPU results for validation
 

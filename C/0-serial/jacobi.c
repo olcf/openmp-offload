@@ -69,7 +69,7 @@ void kernel_serial(double *T, int max_iterations) {
 }
 
 int main(int argc, char *argv[]) {
-  int max_iterations; // maximal number of iterations
+  unsigned int max_iterations; // maximal number of iterations
 
   double *T;      // temperature grid
 

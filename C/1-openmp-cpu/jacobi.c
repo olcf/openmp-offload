@@ -125,7 +125,7 @@ void validate(double *T, double *T_results) {
 }
 
 int main(int argc, char *argv[]) {
-  int max_iterations; // maximal number of iterations
+  unsigned int max_iterations; // maximal number of iterations
 
   double *T;         // temperature grid
   double *T_results; // CPU results for validation
