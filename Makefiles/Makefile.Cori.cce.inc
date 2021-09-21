@@ -8,6 +8,8 @@
 #module unload cray-libsci
 #module list
 
+#or just do: "source Cori_setup_cce"
+
 CC=cc
 CXX=CC
 FC=ftn
@@ -15,7 +17,5 @@ FC=ftn
 CFLAGS=-Ofast -fopenmp -fopenmp-targets=nvptx64 -Xopenmp-target=nvptx64 -march=sm_70
 CXXFLAGS=-Ofast -fopenmp -fopenmp-targets=nvptx64 -Xopenmp-target=nvptx64 -march=sm_70
 FFLAGS=-O3 -homp -h noacc -haccel=nvidia70
-
-LIBS=-Wl,-rpath=$(GCC_ROOT)/lib64 
 
 COMPILER = cce

@@ -1,4 +1,6 @@
-#module load PrgEnv-llvm/12.0.0-git_20210117
+#module purge
+#module load cgpu
+#module load PrgEnv-llvm/13_rc3
 
 CC  = clang
 CXX = clang++
