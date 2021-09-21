@@ -12,13 +12,12 @@ unsigned int SIZE;
 
 #define T(i, j) (T[(i)*n_cells + (j)])
 #define T_new(i, j) (T_new[(i)*n_cells + (j)])
-#define T_init(i, j) (T_init[(i)*n_cells + (j)])
 
 // smallest permitted change in temperature
 double MAX_RESIDUAL = 1.e-5;
 
 // initialize grid and boundary conditions
-void init(double *T, double *T_init) {
+void init(double *T) {
 
   static int first_time = 1;
   static int seed = 0;
@@ -31,7 +30,6 @@ void init(double *T, double *T_init) {
   for (unsigned i = 0; i <= n_cells + 1; i++) {
     for (unsigned j = 0; j <= n_cells + 1; j++) {
       T(i, j) = (double)rand() / (double)RAND_MAX;
-      T_init(i, j) = T(i, j);
     }
   }
 }
@@ -74,7 +72,6 @@ int main(int argc, char *argv[]) {
   int max_iterations; // maximal number of iterations
 
   double *T;      // temperature grid
-  double *T_init; // Initial temperature
 
   if (argc < 3) {
     printf("Usage: %s number_of_iterations number_of_cells\n", argv[0]);
@@ -87,15 +84,14 @@ int main(int argc, char *argv[]) {
   SIZE = (n_cells + 2) * (n_cells + 2);
 
   T = (double *)malloc(SIZE * sizeof(double));
-  T_init = (double *)malloc(SIZE * sizeof(double));
 
 
-  if (T == NULL || T_init == NULL) {
+  if (T == NULL ) {
     printf("Error allocating storage for Temperature\n");
     exit(1);
   }
 
-  init(T, T_init);
+  init(T);
 
   double start = omp_get_wtime();
   kernel_serial(T, max_iterations);
