@@ -135,6 +135,7 @@ int main(int argc, char *argv[]) {
     max_iterations = atoi(argv[1]);
   }
   printf("Using statically sized number of cells = %u\n", n_cells);
+  printf("Using maximum iteration count = %u\n", max_iterations);
 
   init(T_results);
 
