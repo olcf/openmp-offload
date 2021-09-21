@@ -1,1 +1,1 @@
-../../Makefiles/Makefile.Rule.C
+../../Makefiles/Makefile.Rule.CPP
