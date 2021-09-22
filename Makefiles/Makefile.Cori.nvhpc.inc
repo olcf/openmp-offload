@@ -6,9 +6,9 @@ CC  = nvc
 CXX = nvc++
 FC  = nvfortran
 
-CFLAGS    = -O3 -mp=gpu -gpu=cc70 -Minfo=mp,accel
-CXXFLAGS  = -O3 -mp=gpu -gpu=cc70 -Minfo=mp,accel 
-FFLAGS    = -O3 -mp=gpu -gpu=cc70 -Minfo=mp,accel
+CFLAGS    = -fast -mp=gpu -gpu=cc70 -Minfo=mp,accel
+CXXFLAGS  = -fast -mp=gpu -gpu=cc70 -Minfo=mp,accel 
+FFLAGS    = -fast -mp=gpu -gpu=cc70 -Minfo=mp,accel
 
 NVHPC_HOME=$(NVHPC)/Linux_x86_64/21.7
 LIBS      = -Wl,-rpath=$(NVHPC_HOME)/compilers/lib \
