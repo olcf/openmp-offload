@@ -1,7 +1,7 @@
 #!/bin/bash
 # Begin LSF Directives
 #BSUB -P PROJECT_ID
-#BSUB -W 10:00
+#BSUB -W 00:10
 #BSUB -nnodes 1
 #BSUB -U openmpWed
 #BSUB -alloc_flags gpumps
@@ -12,4 +12,4 @@
 export OMP_NUM_THREADS=8
 cd /PATH/TO/TUTORIAL/openmp-offload/C/1-openmp-cpu  #Or other variants
 date
-jsrun -n1 -c $OMP_NUM_THREADS -g1 -bind packed:$OMP_NUM_THREADS <EXECUTABLE>
+jsrun -n1 -c $OMP_NUM_THREADS -g1 --bind packed:$OMP_NUM_THREADS <EXECUTABLE>
