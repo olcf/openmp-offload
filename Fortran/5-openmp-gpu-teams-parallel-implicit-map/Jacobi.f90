@@ -170,7 +170,7 @@ contains
       Residual = 0.0
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP   reduction ( max : Residual )
+      !$OMP   reduction ( max : Residual ) map ( Residual )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
