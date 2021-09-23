@@ -20,11 +20,13 @@ module Jacobi_Form
 
 contains 
 
-  subroutine Initialize ( T, T_Init, nCells )
+
+  subroutine Initialize ( T, T_Init, T_Reference, nCells )
     
     real ( real64 ), dimension ( :, : ), allocatable, intent ( out ) :: &
       T, &
-      T_Init
+      T_Init, &
+      T_Reference
     integer, dimension ( : ), intent ( out ) :: &
       nCells
       
@@ -66,6 +68,7 @@ contains
       
     allocate ( T      ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     allocate ( T_Init ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
+    allocate ( T_Reference ( 0 : nCells ( 1 ) + 1,  0 : nCells ( 2 ) + 1 ) )
     
     !-- Initialize seed for random number
     call random_seed ( size = SeedSize )
@@ -120,10 +123,15 @@ contains
       
       nIterations = nIterations + 1
       
-      Residual = maxval ( abs ( T_new - T ) )
+      associate ( &
+        T_P     => T     ( 1 : nCells ( 1 ), 1 : nCells ( 2 ) ), &
+        T_New_P => T_New ( 1 : nCells ( 1 ), 1 : nCells ( 2 ) ) )
       
-      T ( 1 : nCells ( 1 ), 1 : nCells ( 2 ) ) &
-        = T_New ( 1 : nCells ( 1 ), 1 : nCells ( 2 ) )
+      Residual = maxval ( abs ( T_New_P - T_P ) )
+      
+      T_P = T_New_P
+      
+      end associate
       
     end do
     
@@ -172,7 +180,7 @@ contains
       
       !$OMP target teams distribute parallel do collapse ( 2 ) &
       !$OMP   reduction ( max : Residual ) &
-      !$OMP   map ( from: T ) map ( to: T_New ) map ( Residual )
+      !$OMP   map ( tofrom: T ) map ( to: T_New ) map ( Residual )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
@@ -295,7 +303,7 @@ program Jacobi
     
   nCells = -1
   
-  call Initialize ( T, T_Init, nCells )
+  call Initialize ( T, T_Init, T_Reference, nCells )
   if ( nCells ( 1 ) == -1 ) return
   
   TimeStart = omp_get_wtime ( )
