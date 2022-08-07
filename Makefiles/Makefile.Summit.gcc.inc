@@ -1,3 +1,4 @@
+# module load gcc/12.1.0 cuda
 CC  = gcc
 CXX = g++
 FC  = gfortran

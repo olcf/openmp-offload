@@ -1,4 +1,4 @@
-#module load llvm/12.0.0 cuda
+#module load llvm/14.0.0 cuda
 
 CC  = clang
 CXX = clang++
