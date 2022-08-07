@@ -1,4 +1,4 @@
-#module load nvhpc/22.5 
+# module load nvhpc/22.5 
 
 CC  = nvc
 CXX = nvc++
