@@ -16,9 +16,9 @@ module Jacobi_Form
     Compute, &
     Compute_OpenMP_CPU, &
     Compute_OpenMP_GPU_Teams, &
-    Compute_OpenMP_GPU_Teams_Parallel, &
-    Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map, &
-    Compute_OpenMP_GPU_Teams_Parallel_Data, &
+    Compute_OpenMP_GPU_Teams_Loop, &
+    Compute_OpenMP_GPU_Teams_Loop_Implicit_Map, &
+    Compute_OpenMP_GPU_Teams_Loop_Data, &
     Validate, &
     ShowResults
 
@@ -221,7 +221,7 @@ contains
     
     do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
-      !$OMP target teams loop collapse ( 2 ) &
+      !$OMP target teams distribute collapse ( 2 ) &
       !$OMP map ( to: T ) map ( from: T_New )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
@@ -230,13 +230,13 @@ contains
                        + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
         end do
       end do 
-      !$OMP end target teams loop 
+      !$OMP end target teams distribute 
       
       nIterations = nIterations + 1
       
       Residual = 0.0
       
-      !$OMP target teams loop collapse ( 2 ) &
+      !$OMP target teams distribute collapse ( 2 ) &
       !$OMP   reduction ( max : Residual ) map ( Residual ) &
       !$OMP   map ( tofrom: T ) map ( to: T_New ) 
       do jV = 1, nCells ( 2 )
@@ -245,14 +245,14 @@ contains
           T ( iV, jV ) = T_New ( iV, jV )
         end do
       end do 
-      !$OMP end target teams loop
+      !$OMP end target teams distribute
     
     end do
     
   end subroutine Compute_OpenMP_GPU_Teams
   
   
-  subroutine Compute_OpenMP_GPU_Teams_Parallel &
+  subroutine Compute_OpenMP_GPU_Teams_Loop &
                ( T, nCells, Residual, nIterations )
     
     real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
@@ -305,10 +305,10 @@ contains
     
     end do
     
-  end subroutine Compute_OpenMP_GPU_Teams_Parallel
+  end subroutine Compute_OpenMP_GPU_Teams_loop
   
   
-  subroutine Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map &
+  subroutine Compute_OpenMP_GPU_Teams_Loop_Implicit_Map &
                ( T, nCells, Residual, nIterations )
     
     real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
@@ -359,10 +359,10 @@ contains
     
     end do
     
-  end subroutine Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map
+  end subroutine Compute_OpenMP_GPU_Teams_Loop_Implicit_Map
   
   
-  subroutine Compute_OpenMP_GPU_Teams_Parallel_Data &
+  subroutine Compute_OpenMP_GPU_Teams_Loop_Data &
                ( T, nCells, Residual, nIterations )
     
     real ( real64 ), dimension ( 0 :, 0 : ), intent ( inout ) :: &
@@ -419,7 +419,7 @@ contains
     !$OMP target exit data map ( delete : T_New )
     !$OMP target exit data map ( from : T )
     
-  end subroutine Compute_OpenMP_GPU_Teams_Parallel_Data
+  end subroutine Compute_OpenMP_GPU_Teams_Loop_Data
   
   
   subroutine ShowResults &
@@ -582,53 +582,53 @@ program Jacobi
            Residual, ValidationError, nIterations )   
 
   
-  !-- OpenMP_GPU_Teams_Parallel
+  !-- OpenMP_GPU_Teams_Loop
 
   T = T_Init
   
   TimeStart = omp_get_wtime ( )
-  call Compute_OpenMP_GPU_Teams_Parallel &
+  call Compute_OpenMP_GPU_Teams_Loop &
          ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
-         ( 'Compute_OpenMP_GPU_Teams_Parallel', &
+         ( 'Compute_OpenMP_GPU_Teams_Loop', &
            Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations )
   
   
-  !-- OpenMP_GPU_Teams_Parallel_Implicit_Map
+  !-- OpenMP_GPU_Teams_Loop_Implicit_Map
   
   T = T_Init
   
   TimeStart = omp_get_wtime ( )
-  call Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map &
+  call Compute_OpenMP_GPU_Teams_Loop_Implicit_Map &
          ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
-         ( 'Compute_OpenMP_GPU_Teams_Parallel_Implicit_Map', &
+         ( 'Compute_OpenMP_GPU_Teams_Loop_Implicit_Map', &
            Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations )
   
   
-  !-- OpenMP_GPU_Teams_Parallel_Data
+  !-- OpenMP_GPU_Teams_Loop_Data
   
   T = T_Init
   
   TimeStart = omp_get_wtime ( )
-  call Compute_OpenMP_GPU_Teams_Parallel_Data &
+  call Compute_OpenMP_GPU_Teams_Loop_Data &
          ( T, nCells, Residual, nIterations )
   TimeTotal = omp_get_wtime ( ) - TimeStart
   
   call Validate ( T, T_Reference, Validation, ValidationError )
   
   call ShowResults &
-         ( 'Compute_OpenMP_GPU_Teams_Parallel_Data', &
+         ( 'Compute_OpenMP_GPU_Teams_Loop_Data', &
            Validation, TimeTotal, TimeSerial / TimeTotal, &
            Residual, ValidationError, nIterations )
     

@@ -117,7 +117,7 @@ void kernel_gpu_teams(double *T, int max_iterations) {
   while (residual > MAX_RESIDUAL && iteration <= max_iterations) {
 
     // main computational kernel, average over neighbours in the grid
-#pragma omp target teams loop collapse(2) map(T[:SIZE], T_new[:SIZE])
+#pragma omp target teams distribute collapse(2) map(T[:SIZE], T_new[:SIZE])
     for (unsigned i = 1; i <= n_cells; i++)
       for (unsigned j = 1; j <= n_cells; j++)
         T_new(i, j) =
@@ -127,7 +127,7 @@ void kernel_gpu_teams(double *T, int max_iterations) {
     residual = 0.0;
 
     // compute the largest change and copy T_new to T
-#pragma omp target teams loop collapse(2) reduction(max: residual)         \
+#pragma omp target teams distribute collapse(2) reduction(max: residual)         \
     map(T[:SIZE], T_new[:SIZE]) map(residual)
     for (unsigned int i = 1; i <= n_cells; i++) {
       for (unsigned int j = 1; j <= n_cells; j++) {
@@ -142,7 +142,7 @@ void kernel_gpu_teams(double *T, int max_iterations) {
   free(T_new);
 }
 
-void kernel_gpu_teams_parallel(double *T, int max_iterations) {
+void kernel_gpu_teams_loop(double *T, int max_iterations) {
 
   int iteration = 0;
   double residual = 1.e5;
@@ -180,7 +180,7 @@ void kernel_gpu_teams_parallel(double *T, int max_iterations) {
   free(T_new);
 }
 
-void kernel_gpu_teams_parallel_data(double *T, int max_iterations) {
+void kernel_gpu_teams_loop_data(double *T, int max_iterations) {
 
   int iteration = 0;
   double residual = 1.e5;
@@ -312,31 +312,31 @@ int main(int argc, char *argv[]) {
 
   {
     init(T);
-    printf("=============== GPU Teams Distribute Parallel =================== \n");
+    printf("=============== GPU Teams Loop =================== \n");
     double start = omp_get_wtime();
-    kernel_gpu_teams_parallel(T, max_iterations);
+    kernel_gpu_teams_loop(T, max_iterations);
     double end = omp_get_wtime();
     validate(T, T_results);
-    double omp_gpu_teams_parallel_time = end - start;
-    printf("OpenMP GPU Teams Distribute Parallel time  = %.6lf Sec\n",
-           omp_gpu_teams_parallel_time);
+    double omp_gpu_teams_loop_time = end - start;
+    printf("OpenMP GPU Teams Loop time  = %.6lf Sec\n",
+           omp_gpu_teams_loop_time);
     printf("Speedup = %.6lf\n",
-           serial_kernel_time / omp_gpu_teams_parallel_time);
+           serial_kernel_time / omp_gpu_teams_loop_time);
     printf("================================================================= \n\n");
   }
 
   {
-    printf("=============== GPU Teams Distribute Parallel Data =============== \n");
+    printf("=============== GPU Teams Loop Data =============== \n");
     init(T);
     double start = omp_get_wtime();
-    kernel_gpu_teams_parallel_data(T, max_iterations);
+    kernel_gpu_teams_loop_data(T, max_iterations);
     double end = omp_get_wtime();
     validate(T, T_results);
-    double omp_gpu_teams_parallel_data_time = end - start;
-    printf("OpenMP GPU Teams Distribute Parallel data time  = %.6lf Sec\n",
-           omp_gpu_teams_parallel_data_time);
+    double omp_gpu_teams_loop_data_time = end - start;
+    printf("OpenMP GPU Teams Loop Data time  = %.6lf Sec\n",
+           omp_gpu_teams_loop_data_time);
     printf("Speedup = %.6lf\n",
-           serial_kernel_time / omp_gpu_teams_parallel_data_time);
+           serial_kernel_time / omp_gpu_teams_loop_data_time);
     printf("================================================================= \n\n");
   }
 
