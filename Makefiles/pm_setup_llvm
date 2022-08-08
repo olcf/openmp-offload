@@ -1,0 +1,3 @@
+module use /global/cfs/cdirs/nstaff/cookbg/pe/modulefiles
+module load npe cudatoolkit craype-accel-nvidia80 PrgEnv-llvm
+module list
