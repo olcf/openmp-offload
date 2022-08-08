@@ -15,16 +15,13 @@ ifdef OLCF_LLVM_ROOT
 endif
 
 ifdef NERSC_HOST 
-   ifdef NVHPC
-      include ../../Makefiles/Makefile.Cori.nvhpc.inc
-   endif
-   ifdef GCC_ROOT
-      include ../../Makefiles/Makefile.Cori.gcc.inc
-   endif
-   ifdef LLVM_ROOT
-      include ../../Makefiles/Makefile.Cori.llvm.inc
-   endif
-   ifdef CRAY_CCE_SHARE
-      include ../../Makefiles/Makefile.Cori.cce.inc
+   ifeq "$(PE_ENV)" "NVIDIA"
+      include ../../Makefiles/Makefile.pm.nvhpc.inc
+   else   ifeq "$(PE_ENV)" "GNU"
+      include ../../Makefiles/Makefile.pm.gcc.inc
+   else ifeq "$(PE_ENV)" "LLVM"
+      include ../../Makefiles/Makefile.pm.llvm.inc
+   else ifeq "$(PE_ENV)" "CRAY"
+      include ../../Makefiles/Makefile.pm.cce.inc
    endif
 endif

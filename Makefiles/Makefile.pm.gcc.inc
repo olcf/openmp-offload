@@ -1,6 +1,6 @@
 #module load PrgEnv-gnu
 #module use /global/cfs/cdirs/m1759/yunhe/Modules/perlmutter/modulefiles
-#module load gcc/12-devel-omp_20220803
+#module load gcc/12.1.0
 
 CC  = gcc
 CXX = g++
