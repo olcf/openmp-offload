@@ -1,5 +1,5 @@
 #module use /global/cfs/cdirs/nstaff/cookbg/pe/modulefiles
-#module load npe cudatoolkit craype-accel-nvidia80 PrgEnv-llvm
+#module load npe cudatoolkit/11.5 craype-accel-nvidia80 PrgEnv-llvm
 
 CC  = clang
 CXX = clang++
