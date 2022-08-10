@@ -163,7 +163,7 @@ contains
     
     do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
+      !$OMP target teams distribute parallel do simd collapse ( 2 ) &
       !$OMP map ( to: T ) map ( from: T_New )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
@@ -172,13 +172,13 @@ contains
                        + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
         end do
       end do 
-      !$OMP end target teams distribute parallel do
+      !$OMP end target teams distribute parallel do simd
       
       nIterations = nIterations + 1
       
       Residual = 0.0
       
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
+      !$OMP target teams distribute parallel do simd collapse ( 2 ) &
       !$OMP   reduction ( max : Residual ) &
       !$OMP   map ( tofrom: T ) map ( to: T_New ) 
       do jV = 1, nCells ( 2 )
@@ -187,7 +187,7 @@ contains
           T ( iV, jV ) = T_New ( iV, jV )
         end do
       end do 
-      !$OMP end target teams distribute parallel do
+      !$OMP end target teams distribute parallel do simd
     
     end do
     

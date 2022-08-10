@@ -167,7 +167,7 @@ contains
     
     do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
-      !$OMP parallel do collapse ( 2 )
+      !$OMP parallel do simd collapse ( 2 )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           T_New ( iV, jV ) &
@@ -175,13 +175,13 @@ contains
                        + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
         end do
       end do 
-      !$OMP end parallel do
+      !$OMP end parallel do simd
       
       nIterations = nIterations + 1
       
       Residual = 0.0
       
-      !$OMP parallel do collapse ( 2 ) &
+      !$OMP parallel do simd collapse ( 2 ) &
       !$OMP   reduction ( max : Residual )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
@@ -189,7 +189,7 @@ contains
           T ( iV, jV ) = T_New ( iV, jV )
         end do
       end do 
-      !$OMP end parallel do
+      !$OMP end parallel do simd
     
     end do
     
@@ -277,7 +277,7 @@ contains
     
     do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
+      !$OMP target teams distribute parallel do simd collapse ( 2 ) &
       !$OMP map ( to: T ) map ( from: T_New )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
@@ -286,13 +286,13 @@ contains
                        + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
         end do
       end do 
-      !$OMP end target teams distribute parallel do
+      !$OMP end target teams distribute parallel do simd
       
       nIterations = nIterations + 1
       
       Residual = 0.0
       
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
+      !$OMP target teams distribute parallel do simd collapse ( 2 ) &
       !$OMP   reduction ( max : Residual ) &
       !$OMP   map ( tofrom: T ) map ( to: T_New ) 
       do jV = 1, nCells ( 2 )
@@ -301,7 +301,7 @@ contains
           T ( iV, jV ) = T_New ( iV, jV )
         end do
       end do 
-      !$OMP end target teams distribute parallel do
+      !$OMP end target teams distribute parallel do simd
     
     end do
     
@@ -333,7 +333,7 @@ contains
     
     do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
-      !$OMP target teams distribute parallel do collapse ( 2 )
+      !$OMP target teams distribute parallel do simd collapse ( 2 )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           T_New ( iV, jV ) &
@@ -341,21 +341,21 @@ contains
                        + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
         end do
       end do 
-      !$OMP end target teams distribute parallel do
+      !$OMP end target teams distribute parallel do simd
       
       nIterations = nIterations + 1
       
       Residual = 0.0
       
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
-      !$OMP   reduction ( max : Residual ) map ( Residual )
+      !$OMP target teams distribute parallel do simd collapse ( 2 ) &
+      !$OMP   reduction ( max : Residual ) 
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           Residual = max ( abs ( T_New ( iV, jV ) - T ( iV, jV ) ), Residual )
           T ( iV, jV ) = T_New ( iV, jV )
         end do
       end do 
-      !$OMP end target teams distribute parallel do
+      !$OMP end target teams distribute parallel do simd
     
     end do
     
@@ -390,7 +390,7 @@ contains
     
     do while ( nIterations < MAX_ITERATIONS &
                .and. Residual  > MAX_RESIDUAL )
-      !$OMP target teams distribute parallel do collapse ( 2 )
+      !$OMP target teams distribute parallel do simd collapse ( 2 )
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
           T_New ( iV, jV ) &
@@ -398,13 +398,13 @@ contains
                        + T ( iV - 1, jV ) + T ( iV + 1, jV ) )
         end do
       end do 
-      !$OMP end target teams distribute parallel do
+      !$OMP end target teams distribute parallel do simd
       
       nIterations = nIterations + 1
       
       Residual = 0.0
       
-      !$OMP target teams distribute parallel do collapse ( 2 ) &
+      !$OMP target teams distribute parallel do simd collapse ( 2 ) &
       !$OMP   reduction ( max : Residual ) 
       do jV = 1, nCells ( 2 )
         do iV = 1, nCells ( 1 )
@@ -412,7 +412,7 @@ contains
           T ( iV, jV ) = T_New ( iV, jV )
         end do
       end do 
-      !$OMP end target teams distribute parallel do
+      !$OMP end target teams distribute parallel do simd
     
     end do
     
