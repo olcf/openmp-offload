@@ -3,7 +3,7 @@
 #BSUB -P PROJECT_ID
 #BSUB -W 00:10
 #BSUB -nnodes 1
-#BSUB -U augomp
+#BSUB -U AUGOMP
 #BSUB -alloc_flags gpumps
 #BSUB -J OMPtutorial
 #BSUB -o OMPtutorial.%J
