@@ -1,5 +1,5 @@
 module use /global/cfs/cdirs/nstaff/cookbg/pe/modulefiles
-module load npe
+module load npe/22.08
 module load cudatoolkit/11.5 craype-accel-nvidia80
-module load PrgEnv-llvm
+module load PrgEnv-llvm llvm
 module list
