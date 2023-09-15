@@ -1,3 +1,2 @@
 module load PrgEnv-cray
-module load cudatoollkit craype-accel-nvidia80
 module list

@@ -1,5 +1,4 @@
 #module load PrgEnv-cray
-#module load cudatoollkit craype-accel-nvidia80
 
 CC  = cc
 CXX = CC
