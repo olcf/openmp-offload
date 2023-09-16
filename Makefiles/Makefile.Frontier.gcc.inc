@@ -1,7 +1,7 @@
 # module use /sw/crusher/ums/compilers/modulefiles
 # module load  module load gcc/13.2.1-dev-latest
 
-$(info Make sure the following cammends were executed first: PrgEnv-cray cce craype-accel-amd-gfx90a )
+$(info Make sure the following cammends were executed first: )
 $(info   module use /sw/crusher/ums/compilers/modulefiles)
 $(info   module load  module load gcc/13.2.1-dev-latest )
 
