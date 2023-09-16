@@ -1,9 +1,0 @@
-module purge
-module load cgpu
-module load PrgEnv-cray
-module load cdt
-module load craype-x86-skylake
-module switch cce cce/10.0.3
-module load cuda/10.1.243
-module unload cray-libsci
-module list

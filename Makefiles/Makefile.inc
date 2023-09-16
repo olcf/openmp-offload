@@ -22,7 +22,7 @@ ifdef NERSC_HOST
       include ../../Makefiles/Makefile.pm.nvhpc.inc
    else   ifeq "$(PE_ENV)" "GNU"
       include ../../Makefiles/Makefile.pm.gcc.inc
-   else ifeq "$(PE_ENV)" "LLVM"
+   else ifeq "$(PE_ENV)" "llvm"
       include ../../Makefiles/Makefile.pm.llvm.inc
    else ifeq "$(PE_ENV)" "CRAY"
       include ../../Makefiles/Makefile.pm.cce.inc
