@@ -3,7 +3,7 @@
 
 $(info Make sure the following cammends were executed first: )
 $(info   module use /sw/crusher/ums/compilers/modulefiles)
-$(info   module load  module load gcc/13.2.1-dev-latest )
+$(info   module load gcc/13.2.1-dev-latest )
 
 CC  = gcc
 CXX = g++
