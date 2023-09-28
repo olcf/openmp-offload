@@ -7,6 +7,8 @@
 #SBATCH -N 1
 #SBATCH --reservation=openmp
 
+ulimit -s 300000   # Needed for implicit mapping example
+
 #For CCE
 module reset
 module load PrgEnv-cray cpe/23.09 cce/16.0.1 rocm craype-accel-amd-gfx90a
