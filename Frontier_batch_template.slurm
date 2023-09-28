@@ -8,7 +8,8 @@
 #SBATCH --reservation=openmp
 
 #For CCE
-module load PrgEnv-cray rocm craype-accel-amd-gfx90a
+module reset
+module load PrgEnv-cray cpe/23.09 cce/16.0.1 rocm craype-accel-amd-gfx90a
 
 # For rocm
 # module load PrgEnv-amd amd
